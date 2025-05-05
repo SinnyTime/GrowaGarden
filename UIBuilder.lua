@@ -118,14 +118,13 @@ footer.BorderSizePixel = 0
 Instance.new("UICorner", footer).CornerRadius = UDim.new(0, 8)
 
 
-	local scroll = Instance.new("ScrollingFrame", autoBuyFrame)
-scroll.Size = UDim2.new(1, 0, 1, 0)
+local scroll = Instance.new("ScrollingFrame", autoBuyFrame)
+scroll.Size = UDim2.new(1, 0, 1, -50)
+scroll.Position = UDim2.new(0, 0, 0, 0)
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scroll.ScrollBarThickness = 6
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
-
-
 	
 tabContentFrames["AutoBuy"] = autoBuyFrame
 
