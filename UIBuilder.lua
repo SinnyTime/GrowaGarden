@@ -156,6 +156,34 @@ local function addPlaceholder(frame, text)
 	label.TextWrapped = true
 end
 addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming Soon!")
+	
+	-- 🚀 Teleport buttons
+do
+	local tpFrame = tabContentFrames["Teleports"]
+	
+	local function createTeleportButton(labelText, position)
+		local btn = Instance.new("TextButton", tpFrame)
+		btn.Size = UDim2.new(0, 200, 0, 40)
+		btn.Position = UDim2.new(0.5, -100, 0, 10 + (#tpFrame:GetChildren() - 1) * 50)
+		btn.BackgroundColor3 = Color3.fromRGB(60, 100, 255)
+		btn.TextColor3 = Color3.new(1, 1, 1)
+		btn.TextSize = 16
+		btn.Font = Enum.Font.GothamBold
+		btn.Text = labelText
+		Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+		btn.MouseButton1Click:Connect(function()
+			local char = Players.LocalPlayer.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				char:MoveTo(position)
+			end
+		end)
+	end
+
+	createTeleportButton("🌱 Angry Plant", Vector3.new(-98, 4, -5))
+	createTeleportButton("🥚 Egg Shop", Vector3.new(-256, 3, -2))
+end
+
 
 
 	local layout = Instance.new("UIListLayout", scroll)
