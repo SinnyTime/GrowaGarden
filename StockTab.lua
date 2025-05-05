@@ -70,13 +70,32 @@ return function(tabFrame, items, getStock)
 	local function refreshStock()
 		clearItems()
 
-		for _, category in pairs({"Fruits", "Gears"}) do
-			for _, item in ipairs(items[category]) do
-				local isGear = category == "Gears"
-				local stock = getStock(item, isGear)
-				createItemLabel(item, stock).Parent = scroll
-			end
-		end
+		local function createCategoryHeader(text)
+	local header = Instance.new("TextLabel")
+	header.Size = UDim2.new(1, 0, 0, 26)
+	header.Text = text
+	header.BackgroundTransparency = 1
+	header.Font = Enum.Font.GothamBold
+	header.TextColor3 = Color3.fromRGB(255, 255, 255)
+	header.TextSize = 16
+	header.TextXAlignment = Enum.TextXAlignment.Left
+	header.Position = UDim2.new(0, 8, 0, 0)
+	return header
+end
+
+-- Add Fruits section
+createCategoryHeader("🍎 Fruits").Parent = scroll
+for _, item in ipairs(items.Fruits) do
+	local stock = getStock(item, false)
+	createItemLabel(item, stock).Parent = scroll
+end
+
+-- Add Gears section
+createCategoryHeader("🛠️ Gears").Parent = scroll
+for _, item in ipairs(items.Gears) do
+	local stock = getStock(item, true)
+	createItemLabel(item, stock).Parent = scroll
+end
 
 		scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 	end
