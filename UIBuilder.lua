@@ -112,13 +112,10 @@ autoBuyFrame.Visible = true
 
 -- 🧱 Scrollable area for item sections
 local scrollHolder = Instance.new("Frame", autoBuyFrame)
-	scrollHolder.Parent = autoBuyFrame
-scroll.Parent = scrollHolder
-section.Parent = scroll
-holder.Parent = scroll
 scrollHolder.Size = UDim2.new(1, 0, 1, -50)
 scrollHolder.Position = UDim2.new(0, 0, 0, 0)
 scrollHolder.BackgroundTransparency = 1
+scrollHolder.Parent = autoBuyFrame
 
 local scroll = Instance.new("ScrollingFrame", scrollHolder)
 scroll.Size = UDim2.new(1, 0, 1, 0)
@@ -129,6 +126,8 @@ scroll.BorderSizePixel = 0
 
 -- 🧱 Fixed Buy Button at bottom
 local bottomHolder = Instance.new("Frame", autoBuyFrame)
+	bottomHolder.Parent = autoBuyFrame
+
 bottomHolder.Size = UDim2.new(1, 0, 0, 50)
 bottomHolder.Position = UDim2.new(0, 0, 1, -50)
 bottomHolder.BackgroundTransparency = 1
@@ -305,6 +304,31 @@ local function refreshStock(getStock)
 	local stockFrame = tabContentFrames["Stock"]
 	stockFrame:ClearAllChildren()
 
+	-- 🕒 Timer label
+	local timerLabel = Instance.new("TextLabel", stockFrame)
+	timerLabel.Size = UDim2.new(1, 0, 0, 24)
+	timerLabel.TextColor3 = Color3.new(1, 1, 1)
+	timerLabel.Font = Enum.Font.Gotham
+	timerLabel.TextSize = 14
+	timerLabel.BackgroundTransparency = 1
+	timerLabel.Text = "🕒 Calculating..."
+
+	local function updateTimer()
+		local now = os.date("*t")
+		local secondsPast = (now.min % 5) * 60 + now.sec
+		local secondsLeft = 300 - secondsPast
+		timerLabel.Text = "🕒 Next Refresh: " .. math.floor(secondsLeft / 60) .. "m " .. (secondsLeft % 60) .. "s"
+	end
+
+	updateTimer()
+	task.spawn(function()
+		while timerLabel.Parent do
+			updateTimer()
+			task.wait(1)
+		end
+	end)
+
+	-- 📦 Title
 	local title = Instance.new("TextLabel", stockFrame)
 	title.Size = UDim2.new(1, 0, 0, 30)
 	title.Text = "📦 Current Shop Stock"
@@ -313,10 +337,12 @@ local function refreshStock(getStock)
 	title.TextSize = 18
 	title.BackgroundTransparency = 1
 
+	-- 📃 Layout
 	local layout = Instance.new("UIListLayout", stockFrame)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Padding = UDim.new(0, 4)
 
+	-- 🧾 Populate stock
 	local allItems = {}
 	for _, group in pairs(items) do
 		for _, item in ipairs(group) do
@@ -336,6 +362,7 @@ local function refreshStock(getStock)
 		label.BackgroundTransparency = 1
 	end
 end
+
 
 return {
 	GUI = gui,
