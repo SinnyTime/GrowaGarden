@@ -1,0 +1,208 @@
+-- UIBuilder.lua
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function buildUI(settings, items)
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "AutoShopUI"
+	gui.ResetOnSpawn = false
+	gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+	local main = Instance.new("Frame")
+	main.Size = UDim2.new(0, 520, 0, 580)
+	main.Position = UDim2.new(0.5, -260, 0.5, -290)
+	main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+	main.Parent = gui
+
+	local topBar = Instance.new("Frame", main)
+	topBar.Size = UDim2.new(1, 0, 0, 30)
+	topBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	topBar.BorderSizePixel = 0
+
+	local closeBtn = Instance.new("TextButton", topBar)
+	closeBtn.Size = UDim2.new(0, 28, 0, 28)
+	closeBtn.Position = UDim2.new(1, -32, 0, 2)
+	closeBtn.Text = "✖"
+	closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	closeBtn.Font = Enum.Font.GothamBold
+	closeBtn.TextSize = 16
+	closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+	Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+
+	closeBtn.MouseEnter:Connect(function()
+		closeBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+	end)
+	closeBtn.MouseLeave:Connect(function()
+		closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+	end)
+	closeBtn.MouseButton1Click:Connect(function()
+		gui:Destroy()
+	end)
+
+	local dragging = false
+	local dragStart, startPos
+	local uis = game:GetService("UserInputService")
+
+	topBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = main.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then dragging = false end
+			end)
+		end
+	end)
+
+	topBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			local conn; conn = uis.InputChanged:Connect(function(move)
+				if move == input and dragging then
+					local delta = move.Position - dragStart
+					main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+				elseif not dragging then
+					conn:Disconnect()
+				end
+			end)
+		end
+	end)
+
+	local scroll = Instance.new("ScrollingFrame", main)
+	scroll.Size = UDim2.new(1, -20, 1, -110)
+	scroll.Position = UDim2.new(0, 10, 0, 40)
+	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	scroll.BackgroundTransparency = 1
+	scroll.ScrollBarThickness = 6
+
+	local layout = Instance.new("UIListLayout", scroll)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 4)
+
+	local function createSection(title, list)
+		local section = Instance.new("Frame", scroll)
+		section.Size = UDim2.new(1, 0, 0, 30)
+		section.BackgroundTransparency = 1
+
+		local btn = Instance.new("TextButton", section)
+		btn.Size = UDim2.new(1, 0, 1, 0)
+		btn.Text = ""
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
+		local arrow = Instance.new("TextLabel", btn)
+		arrow.Size = UDim2.new(0, 20, 1, 0)
+		arrow.Position = UDim2.new(0, 5, 0, 0)
+		arrow.Text = "▸"
+		arrow.TextSize = 18
+		arrow.TextColor3 = Color3.new(1, 1, 1)
+		arrow.Font = Enum.Font.GothamBold
+		arrow.BackgroundTransparency = 1
+
+		local label = Instance.new("TextLabel", btn)
+		label.Size = UDim2.new(1, -30, 1, 0)
+		label.Position = UDim2.new(0, 30, 0, 0)
+		label.Text = title
+		label.Font = Enum.Font.GothamBold
+		label.TextSize = 16
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.BackgroundTransparency = 1
+		label.TextXAlignment = Enum.TextXAlignment.Left
+
+		local holder = Instance.new("Frame", scroll)
+		holder.Size = UDim2.new(1, 0, 0, 0)
+		holder.BackgroundTransparency = 1
+		holder.ClipsDescendants = true
+		local subLayout = Instance.new("UIListLayout", holder)
+		subLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+		local contentHeight = 0
+		subLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			contentHeight = subLayout.AbsoluteContentSize.Y
+		end)
+
+		local isOpen = false
+		btn.MouseButton1Click:Connect(function()
+			isOpen = not isOpen
+			arrow.Text = isOpen and "▼" or "▸"
+			TweenService:Create(holder, TweenInfo.new(0.25), {
+				Size = UDim2.new(1, 0, 0, isOpen and contentHeight or 0)
+			}):Play()
+		end)
+
+		for _, item in ipairs(list) do
+			local container = Instance.new("Frame", holder)
+			container.Size = UDim2.new(1, 0, 0, 30)
+			container.BackgroundTransparency = 1
+
+			local cb = Instance.new("TextButton", container)
+			cb.Size = UDim2.new(0, 30, 1, 0)
+			cb.Text = "☐"
+			cb.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+			cb.TextColor3 = Color3.new(1, 1, 1)
+			cb.Font = Enum.Font.Gotham
+			cb.TextSize = 16
+			Instance.new("UICorner", cb).CornerRadius = UDim.new(0, 4)
+
+			local label = Instance.new("TextLabel", container)
+			label.Size = UDim2.new(0.35, 0, 1, 0)
+			label.Position = UDim2.new(0, 35, 0, 0)
+			label.Text = item
+			label.Font = Enum.Font.Gotham
+			label.TextSize = 15
+			label.TextColor3 = Color3.new(1, 1, 1)
+			label.BackgroundTransparency = 1
+			label.TextXAlignment = Enum.TextXAlignment.Left
+
+			local input = Instance.new("TextBox", container)
+			input.Size = UDim2.new(0, 50, 0.9, 0)
+			input.Position = UDim2.new(0.55, 0, 0.05, 0)
+			input.Text = "1"
+			input.TextColor3 = Color3.new(1, 1, 1)
+			input.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+			input.Font = Enum.Font.Gotham
+			input.TextSize = 14
+			Instance.new("UICorner", input).CornerRadius = UDim.new(0, 4)
+
+			local toggle = Instance.new("TextButton", container)
+			toggle.Size = UDim2.new(0, 80, 0.9, 0)
+			toggle.Position = UDim2.new(1, -90, 0.05, 0)
+			toggle.Text = "Max: Off"
+			toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			toggle.TextColor3 = Color3.new(1, 1, 1)
+			toggle.Font = Enum.Font.Gotham
+			toggle.TextSize = 14
+			Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 4)
+
+			cb.MouseButton1Click:Connect(function()
+				settings[item].enabled = not settings[item].enabled
+				cb.Text = settings[item].enabled and "☑" or "☐"
+			end)
+			toggle.MouseButton1Click:Connect(function()
+				settings[item].max = not settings[item].max
+				toggle.Text = settings[item].max and "Max: On" or "Max: Off"
+			end)
+			input:GetPropertyChangedSignal("Text"):Connect(function()
+				local n = tonumber(input.Text)
+				if n then settings[item].amount = math.clamp(n, 1, 999) end
+			end)
+		end
+
+		holder.Parent = scroll
+	end
+
+	createSection("🌽 Fruits", items.Fruits)
+	createSection("🛠️ Gear", items.Gears)
+
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+	end)
+
+	return {
+		GUI = gui,
+		MainFrame = main
+	}
+end
+
+return buildUI
