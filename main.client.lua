@@ -1,7 +1,9 @@
--- Base URL to your GitHub repo
+-- main.client.lua
+
+-- 🌐 Base URL to your GitHub repo
 local BASE_URL = "https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/"
 
--- Loader helper
+-- 📦 Loader helper
 local function import(name)
 	local src = game:HttpGet(BASE_URL .. name .. ".lua")
 	local module = loadstring(src)
@@ -9,30 +11,30 @@ local function import(name)
 	return module()
 end
 
--- Import all modules
+-- 🧠 Import modules
 local ItemData = import("ItemData")
 local StockUtils = import("StockUtils")
 local BuyLogic = import("BuyLogic")
 local UIBuilder = import("UIBuilder")
-local createStockUI = import("StockDisplay")
+local StockTab = import("StockTab")
 
--- Set up data
+-- 📊 Set up data
 local items = ItemData.Items
 local prices = ItemData.Prices
 local settings = ItemData.DefaultSettings(items)
-settings._Gears = items.Gears -- used by BuyLogic to check gear items
+settings._Gears = items.Gears
 
--- Build UI
+-- 🖼️ Build UI from function
 local ui = UIBuilder(settings, items)
--- Start StockTab logic
+
+-- ⏱️ Start StockTab updater (adds timer + refresh every 5:05)
 if ui.StockTab then
-	createStockUI(ui.StockTab, items, StockUtils.getStock)
+	StockTab(ui.StockTab, items, StockUtils.getStock)
 else
 	warn("❌ StockTab frame not returned by UIBuilder!")
 end
 
-
--- Wire the button to BuyLogic
+-- 💰 Hook up Buy Button
 if ui.BuyButton then
 	ui.BuyButton.MouseButton1Click:Connect(function()
 		print("💰 Buying selected items...")
@@ -43,10 +45,10 @@ else
 	warn("❌ BuyButton not returned by UIBuilder!")
 end
 
--- Optional stock refresh logging
+-- 🔄 Manual stock refresh (optional)
 ui.RefreshStock(StockUtils.getStock)
 
--- Hotkey toggle: Left Control
+-- 🎮 UI Toggle with Left Control
 local UserInputService = game:GetService("UserInputService")
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if not gpe and input.KeyCode == Enum.KeyCode.LeftControl then
