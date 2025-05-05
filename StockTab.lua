@@ -30,12 +30,13 @@ return function(tabFrame, items, getStock)
 	layout.Padding = UDim.new(0, 4)
 
 	local function clearItems()
-		for _, child in ipairs(scroll:GetChildren()) do
-			if child:IsA("Frame") then
-				child:Destroy()
-			end
+	for _, child in ipairs(scroll:GetChildren()) do
+		if child:IsA("GuiObject") and child ~= layout then
+			child:Destroy()
 		end
 	end
+end
+
 
 	local function createItemLabel(name, stock)
 		local row = Instance.new("Frame")
