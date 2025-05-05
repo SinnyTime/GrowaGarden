@@ -79,19 +79,58 @@ tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 10)
 
+local selectedTab = nil
+
 local function createTab(name)
-	local btn = Instance.new("TextButton", tabHolder)
+	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(0, 150, 1, 0)
 	btn.Text = name
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 14
 	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	btn.AutoButtonColor = false
+	btn.Parent = tabHolder
+
+	local corner = Instance.new("UICorner", btn)
+	corner.CornerRadius = UDim.new(1, 0)
+
+	local function setSelected(state)
+		if state then
+			btn.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+		else
+			btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		end
+	end
+
+	btn.MouseEnter:Connect(function()
+		if btn ~= selectedTab then
+			btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+		end
+	end)
+	btn.MouseLeave:Connect(function()
+		if btn ~= selectedTab then
+			btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		end
+	end)
+
+	btn.MouseButton1Click:Connect(function()
+		for _, child in pairs(tabHolder:GetChildren()) do
+			if child:IsA("TextButton") then
+				child.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+			end
+		end
+		selectedTab = btn
+		setSelected(true)
+		showTab(name)
+	end)
+
 	return btn
 end
 
+
 local autoTabBtn = createTab("AutoBuy")
+	autoTabBtn:FireEvent("MouseButton1Click")
 local stockTabBtn = createTab("Stock")
 local tpTabBtn = createTab("Teleports")
 
