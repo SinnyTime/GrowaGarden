@@ -94,6 +94,9 @@ end
 local autoTabBtn = createTab("AutoBuy")
 local stockTabBtn = createTab("Stock")
 local tpTabBtn = createTab("Teleports")
+local petsTabBtn = createTab("Pets")
+local sellTabBtn = createTab("Auto Sell")
+local collectTabBtn = createTab("Auto Collect")
 
 
 	local tabContentFrames = {}
@@ -128,9 +131,11 @@ footer.BorderSizePixel = 0
 Instance.new("UICorner", footer).CornerRadius = UDim.new(0, 8)
 	
 tabContentFrames["AutoBuy"] = autoBuyFrame
-
 tabContentFrames["Stock"] = createTabContent()
 tabContentFrames["Teleports"] = createTabContent()
+tabContentFrames["Pets"] = createTabContent()
+tabContentFrames["Auto Sell"] = createTabContent()
+tabContentFrames["Auto Collect"] = createTabContent()
 
 	-- Tab switching logic
 local function showTab(name)
@@ -142,6 +147,9 @@ end
 autoTabBtn.MouseButton1Click:Connect(function() showTab("AutoBuy") end)
 stockTabBtn.MouseButton1Click:Connect(function() showTab("Stock") end)
 tpTabBtn.MouseButton1Click:Connect(function() showTab("Teleports") end)
+petsTabBtn.MouseButton1Click:Connect(function() showTab("Pets") end)
+sellTabBtn.MouseButton1Click:Connect(function() showTab("Auto Sell") end)
+collectTabBtn.MouseButton1Click:Connect(function() showTab("Auto Collect") end)
 
 	-- Optional placeholder text
 local function addPlaceholder(frame, text)
@@ -164,6 +172,11 @@ layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Padding = UDim.new(0, 10)
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 layout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+		addPlaceholder(tabContentFrames["Pets"], "🐾 Pet system coming soon!")
+addPlaceholder(tabContentFrames["Auto Sell"], "💰 Auto-sell system in progress!")
+addPlaceholder(tabContentFrames["Auto Collect"], "🌾 Auto-collect setup coming soon!")
+
 
 	
 	local function createTeleportButton(labelText, position)
