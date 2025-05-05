@@ -1,5 +1,5 @@
 -- Base URL
-local BASE_URL = "https://raw.githubusercontent.com/YourUsername/YourRepo/main/"
+local BASE_URL = "https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/"
 
 -- Loader helper
 local function import(name)
