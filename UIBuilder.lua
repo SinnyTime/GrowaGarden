@@ -112,6 +112,10 @@ autoBuyFrame.Visible = true
 
 -- 🧱 Scrollable area for item sections
 local scrollHolder = Instance.new("Frame", autoBuyFrame)
+	scrollHolder.Parent = autoBuyFrame
+scroll.Parent = scrollHolder
+section.Parent = scroll
+holder.Parent = scroll
 scrollHolder.Size = UDim2.new(1, 0, 1, -50)
 scrollHolder.Position = UDim2.new(0, 0, 0, 0)
 scrollHolder.BackgroundTransparency = 1
