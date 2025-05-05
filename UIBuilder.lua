@@ -10,8 +10,8 @@ local function buildUI(settings, items)
 	gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 	local main = Instance.new("Frame")
-	main.Size = UDim2.new(0, 520, 0, 580)
-	main.Position = UDim2.new(0.5, -260, 0.5, -290)
+	main.Size = UDim2.new(0, 640, 0, 580)
+	main.Position = UDim2.new(0.5, -320, 0.5, -290)
 	main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
 	main.Parent = gui
@@ -69,35 +69,25 @@ local function buildUI(settings, items)
 		end
 	end)
 
--- Scroll container for tab buttons
-local tabScroll = Instance.new("ScrollingFrame", main)
-tabScroll.Size = UDim2.new(1, -50, 0, 40)
-tabScroll.Position = UDim2.new(0, 10, 0, 35)
-tabScroll.BackgroundTransparency = 1
-tabScroll.BorderSizePixel = 0
-tabScroll.ScrollBarThickness = 4
-tabScroll.CanvasSize = UDim2.new(0, 0, 1, 0)
-tabScroll.ScrollingDirection = Enum.ScrollingDirection.X
-tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
-tabScroll.HorizontalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+-- Sidebar for tabs
+local sidebar = Instance.new("Frame", main)
+sidebar.Size = UDim2.new(0, 120, 1, -30)
+sidebar.Position = UDim2.new(0, 0, 0, 30)
+sidebar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+sidebar.BorderSizePixel = 0
 
--- The container that holds the tab buttons
-local tabHolder = Instance.new("Frame", tabScroll)
-tabHolder.Size = UDim2.new(0, 0, 1, 0)
-tabHolder.AutomaticSize = Enum.AutomaticSize.X
-tabHolder.BackgroundTransparency = 1
-	
-local tabLayout = Instance.new("UIListLayout", tabHolder)
-tabLayout.FillDirection = Enum.FillDirection.Horizontal
+local tabLayout = Instance.new("UIListLayout", sidebar)
+tabLayout.FillDirection = Enum.FillDirection.Vertical
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabLayout.Padding = UDim.new(0, 10)
-tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-
+tabLayout.Padding = UDim.new(0, 8)
+tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+tabLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 
 local function createTab(name)
 	local btn = Instance.new("TextButton")
-	btn.Parent = tabHolder
-	btn.Size = UDim2.new(0, 150, 1, 0)
+	btn.Parent = sidebar
+	btn.Size = UDim2.new(1, -10, 0, 40)
+	btn.Position = UDim2.new(0, 5, 0, 0)
 	btn.Text = name
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 14
@@ -113,10 +103,7 @@ local tpTabBtn = createTab("Teleports")
 local petsTabBtn = createTab("Pets")
 local sellTabBtn = createTab("Auto Sell")
 local collectTabBtn = createTab("Auto Collect")
-local endPadding = Instance.new("Frame")
-endPadding.Size = UDim2.new(0, 20, 1, 0)
-endPadding.BackgroundTransparency = 1
-endPadding.Parent = tabHolder
+
 
 
 
@@ -124,8 +111,8 @@ endPadding.Parent = tabHolder
 
 local function createTabContent()
 	local frame = Instance.new("Frame", main)
-	frame.Size = UDim2.new(1, -20, 1, -120)
-	frame.Position = UDim2.new(0, 10, 0, 70)
+	frame.Size = UDim2.new(1, -130, 1, -40)
+	frame.Position = UDim2.new(0, 130, 0, 30)
 	frame.BackgroundTransparency = 1
 	frame.Visible = false
 	return frame
