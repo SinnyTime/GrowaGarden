@@ -159,6 +159,12 @@ end
 	-- 🚀 Teleport buttons
 do
 	local tpFrame = tabContentFrames["Teleports"]
+		local layout = Instance.new("UIListLayout", tpFrame)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 10)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
+
 	
 	local function createTeleportButton(labelText, position)
 		local btn = Instance.new("TextButton", tpFrame)
