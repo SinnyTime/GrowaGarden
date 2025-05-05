@@ -130,7 +130,7 @@ end
 
 
 local autoTabBtn = createTab("AutoBuy")
-	autoTabBtn:FireEvent("MouseButton1Click")
+autoTabBtn:Activate()
 local stockTabBtn = createTab("Stock")
 local tpTabBtn = createTab("Teleports")
 
