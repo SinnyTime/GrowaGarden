@@ -69,12 +69,88 @@ local function buildUI(settings, items)
 		end
 	end)
 
-	local scroll = Instance.new("ScrollingFrame", main)
-	scroll.Size = UDim2.new(1, -20, 1, -110)
-	scroll.Position = UDim2.new(0, 10, 0, 40)
-	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-	scroll.BackgroundTransparency = 1
-	scroll.ScrollBarThickness = 6
+	local tabHolder = Instance.new("Frame", main)
+tabHolder.Size = UDim2.new(1, -20, 0, 30)
+tabHolder.Position = UDim2.new(0, 10, 0, 35)
+tabHolder.BackgroundTransparency = 1
+
+local tabLayout = Instance.new("UIListLayout", tabHolder)
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabLayout.Padding = UDim.new(0, 10)
+
+local function createTab(name)
+	local btn = Instance.new("TextButton", tabHolder)
+	btn.Size = UDim2.new(0, 150, 1, 0)
+	btn.Text = name
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	return btn
+end
+
+local autoTabBtn = createTab("AutoBuy")
+local stockTabBtn = createTab("Stock")
+local tpTabBtn = createTab("Teleports")
+
+
+	local tabContentFrames = {}
+
+local function createTabContent()
+	local frame = Instance.new("Frame", main)
+	frame.Size = UDim2.new(1, -20, 1, -120)
+	frame.Position = UDim2.new(0, 10, 0, 70)
+	frame.BackgroundTransparency = 1
+	frame.Visible = false
+	return frame
+end
+
+local autoBuyFrame = createTabContent()
+autoBuyFrame.Visible = true
+
+	local scroll = Instance.new("ScrollingFrame", autoBuyFrame)
+scroll.Size = UDim2.new(1, 0, 1, 0)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+
+
+	
+tabContentFrames["AutoBuy"] = autoBuyFrame
+
+tabContentFrames["Stock"] = createTabContent()
+tabContentFrames["Teleports"] = createTabContent()
+
+	-- Tab switching logic
+local function showTab(name)
+	for tabName, frame in pairs(tabContentFrames) do
+		frame.Visible = (tabName == name)
+	end
+end
+
+autoTabBtn.MouseButton1Click:Connect(function() showTab("AutoBuy") end)
+stockTabBtn.MouseButton1Click:Connect(function() showTab("Stock") end)
+tpTabBtn.MouseButton1Click:Connect(function() showTab("Teleports") end)
+
+	-- Optional placeholder text
+local function addPlaceholder(frame, text)
+	local label = Instance.new("TextLabel", frame)
+	label.Size = UDim2.new(1, 0, 0, 30)
+	label.Position = UDim2.new(0, 0, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = Color3.new(1,1,1)
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 16
+	label.TextWrapped = true
+end
+
+addPlaceholder(tabContentFrames["Stock"], "📦 Coming soon: Stock Management!")
+addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming Soon!")
+
 
 	local layout = Instance.new("UIListLayout", scroll)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
