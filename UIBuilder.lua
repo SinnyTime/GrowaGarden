@@ -69,27 +69,33 @@ local function buildUI(settings, items)
 		end
 	end)
 
+-- Create Scrollable Tab Bar
 local tabScroll = Instance.new("ScrollingFrame", main)
-tabScroll.Size = UDim2.new(1, -20, 0, 40)
+tabScroll.Size = UDim2.new(1, -50, 0, 40)
 tabScroll.Position = UDim2.new(0, 10, 0, 35)
-tabScroll.CanvasSize = UDim2.new(0, 0, 1, 0)
 tabScroll.BackgroundTransparency = 1
 tabScroll.BorderSizePixel = 0
 tabScroll.ScrollBarThickness = 4
-tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
-tabScroll.HorizontalScrollBarInset = Enum.ScrollBarInset.Always
+tabScroll.CanvasSize = UDim2.new(0, 0, 1, 0)
 tabScroll.ScrollingDirection = Enum.ScrollingDirection.X
+tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
+tabScroll.HorizontalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 
+-- Fix: Add a little padding to avoid hiding tabs behind scrollbar
+local tabPadding = Instance.new("UIPadding", tabScroll)
+tabPadding.PaddingBottom = UDim.new(0, 4)
+
+-- Inner container
 local tabHolder = Instance.new("Frame", tabScroll)
 tabHolder.Size = UDim2.new(0, 0, 1, 0)
 tabHolder.BackgroundTransparency = 1
 tabHolder.AutomaticSize = Enum.AutomaticSize.X
 
+-- Layout for tabs
 local tabLayout = Instance.new("UIListLayout", tabHolder)
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 10)
-
 
 local function createTab(name)
 	local btn = Instance.new("TextButton")
