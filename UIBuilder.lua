@@ -296,27 +296,6 @@ addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming S
 		scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 	end)
 
-	-- Buy Stock button at the bottom of AutoBuy
-local buyButton = Instance.new("TextButton")
-buyButton.Size = UDim2.new(0, 150, 0, 36)
-buyButton.Position = UDim2.new(0.5, -75, 1, -40)
-buyButton.AnchorPoint = Vector2.new(0.5, 1)
-buyButton.Text = "Buy Stock"
-buyButton.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
-buyButton.TextColor3 = Color3.new(1, 1, 1)
-buyButton.Font = Enum.Font.GothamBold
-buyButton.TextSize = 16
-Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
-	
--- Create a bottom container for the button
-local bottomHolder = Instance.new("Frame")
-bottomHolder.Size = UDim2.new(1, 0, 0, 50)
-bottomHolder.Position = UDim2.new(0, 0, 1, -50)
-bottomHolder.BackgroundTransparency = 1
-bottomHolder.Parent = autoBuyFrame
-
-buyButton.Parent = bottomHolder
-
 -- RefreshStock function for the Stock tab
 local function refreshStock(getStock)
 	local stockFrame = tabContentFrames["Stock"]
@@ -354,61 +333,6 @@ local function refreshStock(getStock)
 	end
 end
 
-	-- RefreshStock function for the Stock tab
-local function refreshStock(getStock)
-	local stockFrame = tabContentFrames["Stock"]
-	stockFrame:ClearAllChildren()
-
-	local title = Instance.new("TextLabel", stockFrame)
-	title.Size = UDim2.new(1, 0, 0, 30)
-	title.Text = "📦 Current Shop Stock"
-	title.TextColor3 = Color3.new(1, 1, 1)
-	title.Font = Enum.Font.GothamBold
-	title.TextSize = 18
-	title.BackgroundTransparency = 1
-
-	local layout = Instance.new("UIListLayout", stockFrame)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0, 4)
-
-	local allItems = {}
-	for _, group in pairs(items) do
-		for _, item in ipairs(group) do
-			table.insert(allItems, item)
-		end
-	end
-
-	table.sort(allItems)
-
-	for _, item in ipairs(allItems) do
-		local isGear = table.find(items.Gears, item) ~= nil
-		local stock = getStock(item, isGear)
-
-		local label = Instance.new("TextLabel", stockFrame)
-		label.Size = UDim2.new(1, 0, 0, 24)
-		label.Text = item .. ": " .. stock
-		label.TextColor3 = Color3.new(1, 1, 1)
-		label.Font = Enum.Font.Gotham
-		label.TextSize = 14
-		label.BackgroundTransparency = 1
-	end
-end
-
-
--- Buy Stock button at the bottom of AutoBuy
-local buyButton = Instance.new("TextButton")
-buyButton.Size = UDim2.new(0, 150, 0, 36)
-buyButton.Position = UDim2.new(0.5, -75, 1, -40)
-buyButton.AnchorPoint = Vector2.new(0.5, 1)
-buyButton.Text = "Buy Stock"
-buyButton.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
-buyButton.TextColor3 = Color3.new(1, 1, 1)
-buyButton.Font = Enum.Font.GothamBold
-buyButton.TextSize = 16
-Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
-buyButton.Parent = autoBuyFrame
-
-	
 return {
 	GUI = gui,
 	MainFrame = main,
