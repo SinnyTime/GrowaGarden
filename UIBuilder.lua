@@ -2,17 +2,6 @@
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local tabContentFrames = {}
-
-
-local function showTab(name)
-	for tabName, frame in pairs(tabContentFrames) do
-		frame.Visible = (tabName == name)
-	end
-end
-
-
-
 
 local function buildUI(settings, items)
 	local gui = Instance.new("ScreenGui")
@@ -90,60 +79,24 @@ tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 10)
 
-local selectedTab = nil
-
 local function createTab(name)
-	local btn = Instance.new("TextButton")
+	local btn = Instance.new("TextButton", tabHolder)
 	btn.Size = UDim2.new(0, 150, 1, 0)
 	btn.Text = name
 	btn.Font = Enum.Font.GothamBold
 	btn.TextSize = 14
 	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	btn.AutoButtonColor = false
-	btn.Parent = tabHolder
-
-	local corner = Instance.new("UICorner", btn)
-	corner.CornerRadius = UDim.new(1, 0)
-
-	local function setSelected(state)
-		if state then
-			btn.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
-		else
-			btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-		end
-	end
-
-	btn.MouseEnter:Connect(function()
-		if btn ~= selectedTab then
-			btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-		end
-	end)
-	btn.MouseLeave:Connect(function()
-		if btn ~= selectedTab then
-			btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-		end
-	end)
-
-	btn.MouseButton1Click:Connect(function()
-		for _, child in pairs(tabHolder:GetChildren()) do
-			if child:IsA("TextButton") then
-				child.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-			end
-		end
-		selectedTab = btn
-		setSelected(true)
-		showTab(name)
-	end)
-
+	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 	return btn
 end
 
-
 local autoTabBtn = createTab("AutoBuy")
-	autoTabBtn:FireEvent("MouseButton1Click")
 local stockTabBtn = createTab("Stock")
 local tpTabBtn = createTab("Teleports")
+
+
+	local tabContentFrames = {}
 
 local function createTabContent()
 	local frame = Instance.new("Frame", main)
@@ -156,34 +109,48 @@ end
 
 local autoBuyFrame = createTabContent()
 autoBuyFrame.Visible = true
-	autoBuyFrame.Parent = main
+
+	local scroll = Instance.new("ScrollingFrame", autoBuyFrame)
+scroll.Size = UDim2.new(1, 0, 1, 0)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+
+
 	
-	tabContentFrames["AutoBuy"] = autoBuyFrame
+tabContentFrames["AutoBuy"] = autoBuyFrame
 
-local stockFrame = createTabContent()
-stockFrame.Parent = main
-tabContentFrames["Stock"] = stockFrame
+tabContentFrames["Stock"] = createTabContent()
+tabContentFrames["Teleports"] = createTabContent()
 
-local tpFrame = createTabContent()
-tpFrame.Parent = main
-tabContentFrames["Teleports"] = tpFrame
+	-- Tab switching logic
+local function showTab(name)
+	for tabName, frame in pairs(tabContentFrames) do
+		frame.Visible = (tabName == name)
+	end
+end
 
+autoTabBtn.MouseButton1Click:Connect(function() showTab("AutoBuy") end)
+stockTabBtn.MouseButton1Click:Connect(function() showTab("Stock") end)
+tpTabBtn.MouseButton1Click:Connect(function() showTab("Teleports") end)
 
+	-- Optional placeholder text
+local function addPlaceholder(frame, text)
+	local label = Instance.new("TextLabel", frame)
+	label.Size = UDim2.new(1, 0, 0, 30)
+	label.Position = UDim2.new(0, 0, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = Color3.new(1,1,1)
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 16
+	label.TextWrapped = true
+end
 
--- 🧱 Scrollable area for item sections
-	local scrollHolder = Instance.new("Frame", autoBuyFrame)
-	scrollHolder.Parent = autoBuyFrame
-	scrollHolder.Size = UDim2.new(1, 0, 1, -50)
-	scrollHolder.Position = UDim2.new(0, 0, 0, 0)
-	scrollHolder.BackgroundTransparency = 1
+addPlaceholder(tabContentFrames["Stock"], "📦 Coming soon: Stock Management!")
+addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming Soon!")
 
-	local scroll = Instance.new("ScrollingFrame", scrollHolder)
-	scroll.Parent = scrollHolder
-	scroll.Size = UDim2.new(1, 0, 1, 0)
-	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-	scroll.ScrollBarThickness = 6
-	scroll.BackgroundTransparency = 1
-	scroll.BorderSizePixel = 0
 
 	local layout = Instance.new("UIListLayout", scroll)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -284,8 +251,6 @@ tabContentFrames["Teleports"] = tpFrame
 			toggle.TextSize = 14
 			Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 4)
 
-			settings[item] = settings[item] or { enabled = false, amount = 1, max = false }
-
 			cb.MouseButton1Click:Connect(function()
 				settings[item].enabled = not settings[item].enabled
 				cb.Text = settings[item].enabled and "☑" or "☐"
@@ -310,81 +275,118 @@ tabContentFrames["Teleports"] = tpFrame
 		scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 	end)
 
-	-- RefreshStock logic
-	local function refreshStock(getStock)
-		stockFrame:ClearAllChildren()
+	-- Buy Stock button at the bottom of AutoBuy
+local buyButton = Instance.new("TextButton")
+buyButton.Size = UDim2.new(0, 150, 0, 36)
+buyButton.Position = UDim2.new(0.5, -75, 1, -40)
+buyButton.AnchorPoint = Vector2.new(0.5, 1)
+buyButton.Text = "Buy Stock"
+buyButton.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
+buyButton.TextColor3 = Color3.new(1, 1, 1)
+buyButton.Font = Enum.Font.GothamBold
+buyButton.TextSize = 16
+Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
+buyButton.Parent = autoBuyFrame
 
-		local timerLabel = Instance.new("TextLabel", stockFrame)
-		timerLabel.Size = UDim2.new(1, 0, 0, 24)
-		timerLabel.TextColor3 = Color3.new(1, 1, 1)
-		timerLabel.Font = Enum.Font.Gotham
-		timerLabel.TextSize = 14
-		timerLabel.BackgroundTransparency = 1
-		timerLabel.Text = "🕒 Calculating..."
+-- RefreshStock function for the Stock tab
+local function refreshStock(getStock)
+	local stockFrame = tabContentFrames["Stock"]
+	stockFrame:ClearAllChildren()
 
-		local function updateTimer()
-			local now = os.date("*t")
-			local secondsPast = (now.min % 5) * 60 + now.sec
-			local secondsLeft = 300 - secondsPast
-			timerLabel.Text = "🕒 Next Refresh: " .. math.floor(secondsLeft / 60) .. "m " .. (secondsLeft % 60) .. "s"
-		end
+	local title = Instance.new("TextLabel", stockFrame)
+	title.Size = UDim2.new(1, 0, 0, 30)
+	title.Text = "📦 Current Shop Stock"
+	title.TextColor3 = Color3.new(1,1,1)
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 18
+	title.BackgroundTransparency = 1
 
-		updateTimer()
-		task.spawn(function()
-			while timerLabel.Parent do
-				updateTimer()
-				task.wait(1)
-			end
-		end)
+	local layout = Instance.new("UIListLayout", stockFrame)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 4)
 
-		local title = Instance.new("TextLabel", stockFrame)
-		title.Size = UDim2.new(1, 0, 0, 30)
-		title.Text = "📦 Current Shop Stock"
-		title.TextColor3 = Color3.new(1,1,1)
-		title.Font = Enum.Font.GothamBold
-		title.TextSize = 18
-		title.BackgroundTransparency = 1
-
-		local layout = Instance.new("UIListLayout", stockFrame)
-		layout.SortOrder = Enum.SortOrder.LayoutOrder
-		layout.Padding = UDim.new(0, 4)
-
-		local allItems = {}
-		for _, group in pairs(items) do
-			for _, item in ipairs(group) do
-				table.insert(allItems, item)
-			end
-		end
-		table.sort(allItems)
-
-		for _, item in ipairs(allItems) do
-			local label = Instance.new("TextLabel", stockFrame)
-			label.Size = UDim2.new(1, 0, 0, 24)
-			label.Text = item .. ": " .. getStock(item, table.find(items.Gears, item) and true or false)
-			label.TextColor3 = Color3.new(1,1,1)
-			label.Font = Enum.Font.Gotham
-			label.TextSize = 14
-			label.BackgroundTransparency = 1
+	local allItems = {}
+	for _, group in pairs(items) do
+		for _, item in ipairs(group) do
+			table.insert(allItems, item)
 		end
 	end
 
-	local buyButton = Instance.new("TextButton", autoBuyFrame)
-buyButton.Size = UDim2.new(0, 160, 0, 36)
-buyButton.Position = UDim2.new(0.5, -80, 1, -40)
+	table.sort(allItems)
+
+	for _, item in ipairs(allItems) do
+		local label = Instance.new("TextLabel", stockFrame)
+		label.Size = UDim2.new(1, 0, 0, 24)
+		label.Text = item .. ": " .. getStock(item, table.find(items.Gears, item) and true or false)
+		label.TextColor3 = Color3.new(1,1,1)
+		label.Font = Enum.Font.Gotham
+		label.TextSize = 14
+		label.BackgroundTransparency = 1
+	end
+end
+
+	-- RefreshStock function for the Stock tab
+local function refreshStock(getStock)
+	local stockFrame = tabContentFrames["Stock"]
+	stockFrame:ClearAllChildren()
+
+	local title = Instance.new("TextLabel", stockFrame)
+	title.Size = UDim2.new(1, 0, 0, 30)
+	title.Text = "📦 Current Shop Stock"
+	title.TextColor3 = Color3.new(1, 1, 1)
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 18
+	title.BackgroundTransparency = 1
+
+	local layout = Instance.new("UIListLayout", stockFrame)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 4)
+
+	local allItems = {}
+	for _, group in pairs(items) do
+		for _, item in ipairs(group) do
+			table.insert(allItems, item)
+		end
+	end
+
+	table.sort(allItems)
+
+	for _, item in ipairs(allItems) do
+		local isGear = table.find(items.Gears, item) ~= nil
+		local stock = getStock(item, isGear)
+
+		local label = Instance.new("TextLabel", stockFrame)
+		label.Size = UDim2.new(1, 0, 0, 24)
+		label.Text = item .. ": " .. stock
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.Font = Enum.Font.Gotham
+		label.TextSize = 14
+		label.BackgroundTransparency = 1
+	end
+end
+
+
+-- Buy Stock button at the bottom of AutoBuy
+local buyButton = Instance.new("TextButton")
+buyButton.Size = UDim2.new(0, 150, 0, 36)
+buyButton.Position = UDim2.new(0.5, -75, 1, -40)
+buyButton.AnchorPoint = Vector2.new(0.5, 1)
 buyButton.Text = "Buy Stock"
+buyButton.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
+buyButton.TextColor3 = Color3.new(1, 1, 1)
 buyButton.Font = Enum.Font.GothamBold
 buyButton.TextSize = 16
-buyButton.TextColor3 = Color3.new(1, 1, 1)
-buyButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
 Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
+buyButton.Parent = autoBuyFrame
 
+	
+return {
+	GUI = gui,
+	MainFrame = main,
+	BuyButton = buyButton,
+	RefreshStock = refreshStock
+}
 
-	return {
-		GUI = gui,
-		MainFrame = main,
-		BuyButton = buyButton,
-		RefreshStock = refreshStock
-	}
 end
 
 return buildUI
