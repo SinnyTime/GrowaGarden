@@ -278,13 +278,14 @@ addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming S
 	-- 🛒 Buy Button
 local buyButton = Instance.new("TextButton", autoBuyFrame)
 buyButton.Size = UDim2.new(0, 160, 0, 36)
-buyButton.Position = UDim2.new(0.5, -80, 1, -40)
+buyButton.Position = UDim2.new(0.5, -80, 1, -20) -- changed from -40 to -20
 buyButton.Text = "Buy Stock"
 buyButton.Font = Enum.Font.GothamBold
 buyButton.TextSize = 16
 buyButton.TextColor3 = Color3.new(1, 1, 1)
 buyButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
 Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
+
 
 buyButton.MouseButton1Click:Connect(function()
 	for itemName, data in pairs(settings) do
