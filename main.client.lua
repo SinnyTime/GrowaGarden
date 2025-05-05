@@ -20,22 +20,11 @@ local items = ItemData.Items
 local prices = ItemData.Prices
 local settings = ItemData.DefaultSettings(items)
 
--- Build UI and get back the buy button
+-- Build UI
 local ui = UIBuilder(settings, items)
 
--- Connect buy logic to button
-BuyLogic.Init({
-	settings = settings,
-	items = items.Fruits,
-	prices = prices,
-	getStock = StockUtils.getStock,
-	getMoney = StockUtils.getMoney,
-})
+-- OPTIONAL: hook to UI buy button here if you want interactivity
+-- Otherwise it just runs right away:
 
-BuyLogic.Init({
-	settings = settings,
-	items = items.Gears,
-	prices = prices,
-	getStock = StockUtils.getStock,
-	getMoney = StockUtils.getMoney,
-})
+BuyLogic(settings, items.Fruits, prices, StockUtils.getStock, StockUtils.getMoney)
+BuyLogic(settings, items.Gears, prices, StockUtils.getStock, StockUtils.getMoney)
