@@ -80,6 +80,7 @@ tabScroll.CanvasSize = UDim2.new(0, 0, 1, 0)
 tabScroll.ScrollingDirection = Enum.ScrollingDirection.X
 tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
 tabScroll.HorizontalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+tabScroll.ScrollBarInset = Enum.ScrollBarInset.Always
 
 -- The container that holds the tab buttons
 local tabHolder = Instance.new("Frame", tabScroll)
