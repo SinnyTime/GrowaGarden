@@ -14,7 +14,7 @@ local ItemData = import("ItemData")
 local StockUtils = import("StockUtils")
 local BuyLogic = import("BuyLogic")
 local UIBuilder = import("UIBuilder")
-local StockTab = import("StockTab")
+local createStockUI = import("StockDisplay")
 
 -- Set up data
 local items = ItemData.Items
@@ -26,7 +26,7 @@ settings._Gears = items.Gears -- used by BuyLogic to check gear items
 local ui = UIBuilder(settings, items)
 -- Start StockTab logic
 if ui.StockTab then
-	StockTab(ui.StockTab, items, StockUtils.getStock)
+	createStockUI(ui.StockTab, items, StockUtils.getStock)
 else
 	warn("❌ StockTab frame not returned by UIBuilder!")
 end
