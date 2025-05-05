@@ -155,7 +155,6 @@ local function addPlaceholder(frame, text)
 	label.TextSize = 16
 	label.TextWrapped = true
 end
-addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming Soon!")
 	
 	-- 🚀 Teleport buttons
 do
