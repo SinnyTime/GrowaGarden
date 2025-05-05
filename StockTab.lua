@@ -83,9 +83,10 @@ return function(tabFrame, items, getStock)
 
 	local function getNextRefreshDelay()
 		local now = os.time()
-		local nextTime = now - (now % 300) + 305
-		if nextTime <= now then nextTime += 300 end
-		return nextTime - now
+		local interval = 300 -- 5 minutes
+		local refreshDelay = 5 -- shop updates at X:05, X:10, X:15, etc.
+		local nextRefresh = now - (now % interval) + interval + refreshDelay
+		return nextRefresh - now
 	end
 
 	local function startTimerLoop()
@@ -96,6 +97,9 @@ return function(tabFrame, items, getStock)
 				timerLabel.Text = "Next Refresh: " .. formatTime(t)
 				task.wait(1)
 			end
+
+			timerLabel.Text = "Waiting for stock to update..."
+			task.wait(5)
 
 			timerLabel.Text = "Refreshing..."
 			refreshStock()
