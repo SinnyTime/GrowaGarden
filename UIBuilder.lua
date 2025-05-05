@@ -84,13 +84,15 @@ tabScroll.HorizontalScrollBarInset = Enum.ScrollBarInset.ScrollBar
 -- The container that holds the tab buttons
 local tabHolder = Instance.new("Frame", tabScroll)
 tabHolder.Size = UDim2.new(0, 0, 1, 0)
-tabHolder.BackgroundTransparency = 1
 tabHolder.AutomaticSize = Enum.AutomaticSize.X
-
+tabHolder.BackgroundTransparency = 1
+	
 local tabLayout = Instance.new("UIListLayout", tabHolder)
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 10)
+tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+
 
 local function createTab(name)
 	local btn = Instance.new("TextButton")
@@ -111,6 +113,11 @@ local tpTabBtn = createTab("Teleports")
 local petsTabBtn = createTab("Pets")
 local sellTabBtn = createTab("Auto Sell")
 local collectTabBtn = createTab("Auto Collect")
+local endPadding = Instance.new("Frame")
+endPadding.Size = UDim2.new(0, 20, 1, 0)
+endPadding.BackgroundTransparency = 1
+endPadding.Parent = tabHolder
+
 
 
 	local tabContentFrames = {}
