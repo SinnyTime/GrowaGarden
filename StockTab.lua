@@ -84,7 +84,7 @@ return function(tabFrame, items, getStock)
 	local function getNextRefreshDelay()
 		local now = os.time()
 		local interval = 300 -- 5 minutes
-		local refreshDelay = 5 -- shop updates at X:05, X:10, X:15, etc.
+		local refreshDelay = 1
 		local nextRefresh = now - (now % interval) + interval + refreshDelay
 		return nextRefresh - now
 	end
