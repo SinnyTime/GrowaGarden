@@ -130,7 +130,7 @@ end
 
 
 local autoTabBtn = createTab("AutoBuy")
-autoTabBtn:Activate()
+	autoTabBtn:FireEvent("MouseButton1Click")
 local stockTabBtn = createTab("Stock")
 local tpTabBtn = createTab("Teleports")
 
@@ -150,70 +150,17 @@ local autoBuyFrame = createTabContent()
 autoBuyFrame.Visible = true
 
 -- 🧱 Scrollable area for item sections
-local scrollHolder = Instance.new("Frame", autoBuyFrame)
-scrollHolder.Size = UDim2.new(1, 0, 1, -50)
-scrollHolder.Position = UDim2.new(0, 0, 0, 0)
-scrollHolder.BackgroundTransparency = 1
-scrollHolder.Parent = autoBuyFrame
+	local scrollHolder = Instance.new("Frame", autoBuyFrame)
+	scrollHolder.Size = UDim2.new(1, 0, 1, -50)
+	scrollHolder.Position = UDim2.new(0, 0, 0, 0)
+	scrollHolder.BackgroundTransparency = 1
 
-local scroll = Instance.new("ScrollingFrame", scrollHolder)
-scroll.Size = UDim2.new(1, 0, 1, 0)
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-scroll.ScrollBarThickness = 6
-scroll.BackgroundTransparency = 1
-scroll.BorderSizePixel = 0
-
--- 🧱 Fixed Buy Button at bottom
-local bottomHolder = Instance.new("Frame", autoBuyFrame)
-	bottomHolder.Parent = autoBuyFrame
-
-bottomHolder.Size = UDim2.new(1, 0, 0, 50)
-bottomHolder.Position = UDim2.new(0, 0, 1, -50)
-bottomHolder.BackgroundTransparency = 1
-
-local buyButton = Instance.new("TextButton", bottomHolder)
-buyButton.Size = UDim2.new(0, 150, 0, 36)
-buyButton.Position = UDim2.new(0.5, -75, 0.5, -18)
-buyButton.AnchorPoint = Vector2.new(0.5, 0.5)
-buyButton.Text = "Buy Stock"
-buyButton.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
-buyButton.TextColor3 = Color3.new(1, 1, 1)
-buyButton.Font = Enum.Font.GothamBold
-buyButton.TextSize = 16
-Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
-	
-tabContentFrames["AutoBuy"] = autoBuyFrame
-
-tabContentFrames["Stock"] = createTabContent()
-tabContentFrames["Teleports"] = createTabContent()
-
-	-- Tab switching logic
-local function showTab(name)
-	for tabName, frame in pairs(tabContentFrames) do
-		frame.Visible = (tabName == name)
-	end
-end
-
-autoTabBtn.MouseButton1Click:Connect(function() showTab("AutoBuy") end)
-stockTabBtn.MouseButton1Click:Connect(function() showTab("Stock") end)
-tpTabBtn.MouseButton1Click:Connect(function() showTab("Teleports") end)
-
-	-- Optional placeholder text
-local function addPlaceholder(frame, text)
-	local label = Instance.new("TextLabel", frame)
-	label.Size = UDim2.new(1, 0, 0, 30)
-	label.Position = UDim2.new(0, 0, 0, 0)
-	label.BackgroundTransparency = 1
-	label.Text = text
-	label.TextColor3 = Color3.new(1,1,1)
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 16
-	label.TextWrapped = true
-end
-
-addPlaceholder(tabContentFrames["Stock"], "📦 Coming soon: Stock Management!")
-addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming Soon!")
-
+	local scroll = Instance.new("ScrollingFrame", scrollHolder)
+	scroll.Size = UDim2.new(1, 0, 1, 0)
+	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	scroll.ScrollBarThickness = 6
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
 
 	local layout = Instance.new("UIListLayout", scroll)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -314,6 +261,8 @@ addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming S
 			toggle.TextSize = 14
 			Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 4)
 
+			settings[item] = settings[item] or { enabled = false, amount = 1, max = false }
+
 			cb.MouseButton1Click:Connect(function()
 				settings[item].enabled = not settings[item].enabled
 				cb.Text = settings[item].enabled and "☑" or "☐"
@@ -338,78 +287,70 @@ addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming S
 		scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 	end)
 
--- RefreshStock function for the Stock tab
-local function refreshStock(getStock)
-	local stockFrame = tabContentFrames["Stock"]
-	stockFrame:ClearAllChildren()
+	-- RefreshStock logic
+	local function refreshStock(getStock)
+		stockFrame:ClearAllChildren()
 
-	-- 🕒 Timer label
-	local timerLabel = Instance.new("TextLabel", stockFrame)
-	timerLabel.Size = UDim2.new(1, 0, 0, 24)
-	timerLabel.TextColor3 = Color3.new(1, 1, 1)
-	timerLabel.Font = Enum.Font.Gotham
-	timerLabel.TextSize = 14
-	timerLabel.BackgroundTransparency = 1
-	timerLabel.Text = "🕒 Calculating..."
+		local timerLabel = Instance.new("TextLabel", stockFrame)
+		timerLabel.Size = UDim2.new(1, 0, 0, 24)
+		timerLabel.TextColor3 = Color3.new(1, 1, 1)
+		timerLabel.Font = Enum.Font.Gotham
+		timerLabel.TextSize = 14
+		timerLabel.BackgroundTransparency = 1
+		timerLabel.Text = "🕒 Calculating..."
 
-	local function updateTimer()
-		local now = os.date("*t")
-		local secondsPast = (now.min % 5) * 60 + now.sec
-		local secondsLeft = 300 - secondsPast
-		timerLabel.Text = "🕒 Next Refresh: " .. math.floor(secondsLeft / 60) .. "m " .. (secondsLeft % 60) .. "s"
-	end
-
-	updateTimer()
-	task.spawn(function()
-		while timerLabel.Parent do
-			updateTimer()
-			task.wait(1)
+		local function updateTimer()
+			local now = os.date("*t")
+			local secondsPast = (now.min % 5) * 60 + now.sec
+			local secondsLeft = 300 - secondsPast
+			timerLabel.Text = "🕒 Next Refresh: " .. math.floor(secondsLeft / 60) .. "m " .. (secondsLeft % 60) .. "s"
 		end
-	end)
 
-	-- 📦 Title
-	local title = Instance.new("TextLabel", stockFrame)
-	title.Size = UDim2.new(1, 0, 0, 30)
-	title.Text = "📦 Current Shop Stock"
-	title.TextColor3 = Color3.new(1,1,1)
-	title.Font = Enum.Font.GothamBold
-	title.TextSize = 18
-	title.BackgroundTransparency = 1
+		updateTimer()
+		task.spawn(function()
+			while timerLabel.Parent do
+				updateTimer()
+				task.wait(1)
+			end
+		end)
 
-	-- 📃 Layout
-	local layout = Instance.new("UIListLayout", stockFrame)
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0, 4)
+		local title = Instance.new("TextLabel", stockFrame)
+		title.Size = UDim2.new(1, 0, 0, 30)
+		title.Text = "📦 Current Shop Stock"
+		title.TextColor3 = Color3.new(1,1,1)
+		title.Font = Enum.Font.GothamBold
+		title.TextSize = 18
+		title.BackgroundTransparency = 1
 
-	-- 🧾 Populate stock
-	local allItems = {}
-	for _, group in pairs(items) do
-		for _, item in ipairs(group) do
-			table.insert(allItems, item)
+		local layout = Instance.new("UIListLayout", stockFrame)
+		layout.SortOrder = Enum.SortOrder.LayoutOrder
+		layout.Padding = UDim.new(0, 4)
+
+		local allItems = {}
+		for _, group in pairs(items) do
+			for _, item in ipairs(group) do
+				table.insert(allItems, item)
+			end
+		end
+		table.sort(allItems)
+
+		for _, item in ipairs(allItems) do
+			local label = Instance.new("TextLabel", stockFrame)
+			label.Size = UDim2.new(1, 0, 0, 24)
+			label.Text = item .. ": " .. getStock(item, table.find(items.Gears, item) and true or false)
+			label.TextColor3 = Color3.new(1,1,1)
+			label.Font = Enum.Font.Gotham
+			label.TextSize = 14
+			label.BackgroundTransparency = 1
 		end
 	end
 
-	table.sort(allItems)
-
-	for _, item in ipairs(allItems) do
-		local label = Instance.new("TextLabel", stockFrame)
-		label.Size = UDim2.new(1, 0, 0, 24)
-		label.Text = item .. ": " .. getStock(item, table.find(items.Gears, item) and true or false)
-		label.TextColor3 = Color3.new(1,1,1)
-		label.Font = Enum.Font.Gotham
-		label.TextSize = 14
-		label.BackgroundTransparency = 1
-	end
-end
-
-
-return {
-	GUI = gui,
-	MainFrame = main,
-	BuyButton = buyButton,
-	RefreshStock = refreshStock
-}
-
+	return {
+		GUI = gui,
+		MainFrame = main,
+		BuyButton = buyButton,
+		RefreshStock = refreshStock
+	}
 end
 
 return buildUI
