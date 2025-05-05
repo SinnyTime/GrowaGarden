@@ -110,14 +110,35 @@ end
 local autoBuyFrame = createTabContent()
 autoBuyFrame.Visible = true
 
-	local scroll = Instance.new("ScrollingFrame", autoBuyFrame)
+-- 🧱 Scrollable area for item sections
+local scrollHolder = Instance.new("Frame", autoBuyFrame)
+scrollHolder.Size = UDim2.new(1, 0, 1, -50)
+scrollHolder.Position = UDim2.new(0, 0, 0, 0)
+scrollHolder.BackgroundTransparency = 1
+
+local scroll = Instance.new("ScrollingFrame", scrollHolder)
 scroll.Size = UDim2.new(1, 0, 1, 0)
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scroll.ScrollBarThickness = 6
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 
+-- 🧱 Fixed Buy Button at bottom
+local bottomHolder = Instance.new("Frame", autoBuyFrame)
+bottomHolder.Size = UDim2.new(1, 0, 0, 50)
+bottomHolder.Position = UDim2.new(0, 0, 1, -50)
+bottomHolder.BackgroundTransparency = 1
 
+local buyButton = Instance.new("TextButton", bottomHolder)
+buyButton.Size = UDim2.new(0, 150, 0, 36)
+buyButton.Position = UDim2.new(0.5, -75, 0.5, -18)
+buyButton.AnchorPoint = Vector2.new(0.5, 0.5)
+buyButton.Text = "Buy Stock"
+buyButton.BackgroundColor3 = Color3.fromRGB(30, 120, 30)
+buyButton.TextColor3 = Color3.new(1, 1, 1)
+buyButton.Font = Enum.Font.GothamBold
+buyButton.TextSize = 16
+Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
 	
 tabContentFrames["AutoBuy"] = autoBuyFrame
 
