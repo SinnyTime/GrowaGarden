@@ -155,8 +155,6 @@ local function addPlaceholder(frame, text)
 	label.TextSize = 16
 	label.TextWrapped = true
 end
-
-addPlaceholder(tabContentFrames["Stock"], "📦 Coming soon: Stock Management!")
 addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming Soon!")
 
 
