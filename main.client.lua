@@ -26,5 +26,9 @@ local ui = UIBuilder(settings, items)
 -- OPTIONAL: hook to UI buy button here if you want interactivity
 -- Otherwise it just runs right away:
 
-BuyLogic(settings, items.Fruits, prices, StockUtils.getStock, StockUtils.getMoney)
-BuyLogic(settings, items.Gears, prices, StockUtils.getStock, StockUtils.getMoney)
+ui.BuyButton.MouseButton1Click:Connect(function()
+	BuyLogic(settings, items.Fruits, prices, StockUtils.getStock, StockUtils.getMoney)
+	BuyLogic(settings, items.Gears, prices, StockUtils.getStock, StockUtils.getMoney)
+end)
+
+ui.RefreshStock(StockUtils.getStock)
