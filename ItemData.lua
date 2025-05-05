@@ -1,5 +1,6 @@
 local module = {}
 
+-- Item categories
 module.Items = {
 	Fruits = {
 		"Carrot", "Strawberry", "Blueberry", "Orange Tulip", "Tomato", "Corn",
@@ -12,6 +13,7 @@ module.Items = {
 	}
 }
 
+-- Flat price lookup
 module.Prices = {
 	["Carrot"] = 10, ["Strawberry"] = 50, ["Blueberry"] = 400, ["Orange Tulip"] = 600,
 	["Tomato"] = 800, ["Corn"] = 1300, ["Daffodil"] = 1000, ["Watermelon"] = 2500,
@@ -24,6 +26,7 @@ module.Prices = {
 	["Master Sprinkler"] = 10000000
 }
 
+-- Default toggle state settings
 function module.DefaultSettings(itemGroups)
 	local settings = {}
 	for _, group in pairs(itemGroups) do
@@ -32,6 +35,33 @@ function module.DefaultSettings(itemGroups)
 		end
 	end
 	return settings
+end
+
+-- Returns the price of a given item or 0 if not found
+function module.GetPrice(item)
+	return module.Prices[item] or 0
+end
+
+-- Returns a flat list of all items (Fruits + Gears)
+function module.GetAllItems()
+	local all = {}
+	for _, group in pairs(module.Items) do
+		for _, item in ipairs(group) do
+			table.insert(all, item)
+		end
+	end
+	return all
+end
+
+-- Developer helper: warns if any item is missing from Prices table
+function module.ValidatePrices()
+	for _, group in pairs(module.Items) do
+		for _, item in ipairs(group) do
+			if not module.Prices[item] then
+				warn("[ItemData] Missing price for item: " .. item)
+			end
+		end
+	end
 end
 
 return module
