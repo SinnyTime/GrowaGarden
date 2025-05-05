@@ -123,7 +123,7 @@ scroll.BorderSizePixel = 0
 local footer = Instance.new("Frame", autoBuyFrame)
 footer.Size = UDim2.new(1, 0, 0, 50)
 footer.Position = UDim2.new(0, 0, 1, -50)
-footer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+footer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 footer.BorderSizePixel = 0
 Instance.new("UICorner", footer).CornerRadius = UDim.new(0, 8)
 	
