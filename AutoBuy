@@ -6,56 +6,73 @@ local GameEvents = ReplicatedStorage:WaitForChild("GameEvents")
 local BuySeedStock = GameEvents:FindFirstChild("BuySeedStock")
 local BuyGearStock = GameEvents:FindFirstChild("BuyGearStock")
 
-local maxStock = {
-	["Carrot"] = 25, ["Strawberry"] = 6, ["Blueberry"] = 5, ["Orange Tulip"] = 25,
-	["Tomato"] = 3, ["Corn"] = 4, ["Daffodil"] = 6, ["Watermelon"] = 6, ["Pumpkin"] = 4,
-	["Apple"] = 3, ["Bamboo"] = 20, ["Coconut"] = 2, ["Cactus"] = 5, ["Dragon Fruit"] = 4,
-	["Mango"] = 2, ["Grape"] = 1, ["Mushroom"] = 23, ["Pepper"] = 23,
-	["Watering Can"] = 3, ["Trowel"] = 3, ["Basic Sprinkler"] = 3, ["Advanced Sprinkler"] = 2,
-	["Godly Sprinkler"] = 2, ["Lightning Rod"] = 1, ["Master Sprinkler"] = 1
-}
-
 local items = {
-	Fruits = {
-		"Carrot", "Strawberry", "Blueberry", "Orange Tulip", "Tomato", "Corn",
-		"Daffodil", "Watermelon", "Pumpkin", "Apple", "Bamboo", "Coconut",
-		"Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper"
-	},
-	Gears = {
-		"Watering Can", "Trowel", "Basic Sprinkler", "Advanced Sprinkler",
-		"Godly Sprinkler", "Lightning Rod", "Master Sprinkler"
-	}
+    Fruits = {
+        "Carrot", "Strawberry", "Blueberry", "Orange Tulip", "Tomato", "Corn",
+        "Daffodil", "Watermelon", "Pumpkin", "Apple", "Bamboo", "Coconut",
+        "Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper"
+    },
+    Gears = {
+        "Watering Can", "Trowel", "Basic Sprinkler", "Advanced Sprinkler",
+        "Godly Sprinkler", "Lightning Rod", "Master Sprinkler"
+    }
 }
 
 local itemPrices = {
-	["Carrot"] = 10, ["Strawberry"] = 50, ["Blueberry"] = 400, ["Orange Tulip"] = 600,
-	["Tomato"] = 800, ["Corn"] = 1300, ["Daffodil"] = 1000, ["Watermelon"] = 2500,
-	["Pumpkin"] = 3000, ["Apple"] = 3250, ["Bamboo"] = 4000, ["Coconut"] = 6000,
-	["Cactus"] = 15000, ["Dragon Fruit"] = 50000, ["Mango"] = 100000, ["Grape"] = 850000,
-	["Mushroom"] = 150000, ["Pepper"] = 1000000, ["Watering Can"] = 50000,
-	["Trowel"] = 100000, ["Basic Sprinkler"] = 25000, ["Advanced Sprinkler"] = 50000,
-	["Godly Sprinkler"] = 120000, ["Lightning Rod"] = 1000000, ["Master Sprinkler"] = 10000000
+    ["Carrot"] = 10, ["Strawberry"] = 50, ["Blueberry"] = 400, ["Orange Tulip"] = 600,
+    ["Tomato"] = 800, ["Corn"] = 1300, ["Daffodil"] = 1000, ["Watermelon"] = 2500,
+    ["Pumpkin"] = 3000, ["Apple"] = 3250, ["Bamboo"] = 4000, ["Coconut"] = 6000,
+    ["Cactus"] = 15000, ["Dragon Fruit"] = 50000, ["Mango"] = 100000, ["Grape"] = 850000,
+    ["Mushroom"] = 150000, ["Pepper"] = 1000000, ["Watering Can"] = 50000,
+    ["Trowel"] = 100000, ["Basic Sprinkler"] = 25000, ["Advanced Sprinkler"] = 50000,
+    ["Godly Sprinkler"] = 120000, ["Lightning Rod"] = 1000000, ["Master Sprinkler"] = 10000000
 }
 
 local settings = {}
 for _, group in pairs(items) do
-	for _, item in ipairs(group) do
-		settings[item] = {enabled = false, max = false, amount = 1}
-	end
+    for _, item in ipairs(group) do
+        settings[item] = { enabled = false, max = false, amount = 1 }
+    end
 end
 
 local function getMoney()
-	local stats = LocalPlayer:FindFirstChild("leaderstats")
-	return stats and stats:FindFirstChild("Sheckles") and stats.Sheckles.Value or 0
+    local stats = LocalPlayer:FindFirstChild("leaderstats")
+    return stats and stats:FindFirstChild("Sheckles") and stats.Sheckles.Value or 0
 end
+
+local function getStock(item)
+    local gui = LocalPlayer.PlayerGui
+    local shopUI = table.find(items.Gears, item) and gui:FindFirstChild("Gear_Shop") or gui:FindFirstChild("Seed_Shop")
+    if not shopUI then return 0 end
+
+    -- Try multiple ways to find the item entry
+    local entry = shopUI:FindFirstChild(item, true) -- 🔍 deep search
+    if not entry then return 0 end
+
+    -- Look for a TextLabel that ends in "Stock_Text"
+    local stockLabel
+    for _, descendant in ipairs(entry:GetDescendants()) do
+        if descendant:IsA("TextLabel") and descendant.Name == "Stock_Text" then
+            stockLabel = descendant
+            break
+        end
+    end
+
+    if not stockLabel then return 0 end
+
+    local text = stockLabel.Text or "0X Stock"
+    local parsed = tonumber(text:match("X(%d+)")) or tonumber(text:match("(%d+)")) or 0
+    return parsed
+end
+
 
 -- UI START
 local gui = Instance.new("ScreenGui")
 gui.Name = "AutoShopUI"
 gui.ResetOnSpawn = false
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-local main = Instance.new("Frame")
 
+local main = Instance.new("Frame")
 main.Parent = gui
 main.Size = UDim2.new(0, 520, 0, 580)
 main.Position = UDim2.new(0.5, -260, 0.5, -290)
@@ -79,40 +96,41 @@ closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
 closeBtn.MouseEnter:Connect(function()
-	closeBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
 end)
 closeBtn.MouseLeave:Connect(function()
-	closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 end)
 closeBtn.MouseButton1Click:Connect(function()
-	gui:Destroy()
-	print("👋 UI closed. Ready for fresh injection, onii-chan~ 💉")
+    gui:Destroy()
+    print("👋 UI closed. Ready for fresh injection, onii-chan~ 💉")
 end)
 
 -- Dragging
 local dragging, dragStart, startPos = false, nil, nil
 local uis = game:GetService("UserInputService")
 topBar.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = main.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then dragging = false end
-		end)
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
 end)
 topBar.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		local conn; conn = uis.InputChanged:Connect(function(move)
-			if move == input and dragging then
-				local delta = move.Position - dragStart
-				main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-			elseif not dragging then
-				conn:Disconnect()
-			end
-		end)
-	end
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        local conn
+        conn = uis.InputChanged:Connect(function(move)
+            if move == input and dragging then
+                local delta = move.Position - dragStart
+                main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            elseif not dragging then
+                conn:Disconnect()
+            end
+        end)
+    end
 end)
 
 -- Content
@@ -130,121 +148,121 @@ layout.Padding = UDim.new(0, 4)
 -- Collapsible
 local TweenService = game:GetService("TweenService")
 local function createSection(name, itemList)
-	local section = Instance.new("Frame", scroll)
-	section.Size = UDim2.new(1, 0, 0, 30)
-	section.BackgroundTransparency = 1
+    local section = Instance.new("Frame", scroll)
+    section.Size = UDim2.new(1, 0, 0, 30)
+    section.BackgroundTransparency = 1
 
-	local btn = Instance.new("TextButton", section)
-	btn.Size = UDim2.new(1, 0, 1, 0)
-	btn.Text = ""
-	btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+    local btn = Instance.new("TextButton", section)
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.Text = ""
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
 
-	local arrow = Instance.new("TextLabel", btn)
-	arrow.Size = UDim2.new(0, 20, 1, 0)
-	arrow.Position = UDim2.new(0, 5, 0, 0)
-	arrow.Text = "▸"
-	arrow.TextSize = 18
-	arrow.TextColor3 = Color3.new(1,1,1)
-	arrow.Font = Enum.Font.GothamBold
-	arrow.BackgroundTransparency = 1
+    local arrow = Instance.new("TextLabel", btn)
+    arrow.Size = UDim2.new(0, 20, 1, 0)
+    arrow.Position = UDim2.new(0, 5, 0, 0)
+    arrow.Text = "▸"
+    arrow.TextSize = 18
+    arrow.TextColor3 = Color3.new(1, 1, 1)
+    arrow.Font = Enum.Font.GothamBold
+    arrow.BackgroundTransparency = 1
 
-	local label = Instance.new("TextLabel", btn)
-	label.Size = UDim2.new(1, -30, 1, 0)
-	label.Position = UDim2.new(0, 30, 0, 0)
-	label.Text = name
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = 16
-	label.TextColor3 = Color3.new(1,1,1)
-	label.BackgroundTransparency = 1
-	label.TextXAlignment = Enum.TextXAlignment.Left
+    local label = Instance.new("TextLabel", btn)
+    label.Size = UDim2.new(1, -30, 1, 0)
+    label.Position = UDim2.new(0, 30, 0, 0)
+    label.Text = name
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 16
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Left
 
-	local holder = Instance.new("Frame", scroll)
-	holder.Parent = scroll
-	holder.Size = UDim2.new(1, 0, 0, 0)
-	holder.BackgroundTransparency = 1
-	holder.ClipsDescendants = true
-	local subLayout = Instance.new("UIListLayout", holder)
-	subLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	local contentHeight = 0
+    local holder = Instance.new("Frame", scroll)
+    holder.Parent = scroll
+    holder.Size = UDim2.new(1, 0, 0, 0)
+    holder.BackgroundTransparency = 1
+    holder.ClipsDescendants = true
+    local subLayout = Instance.new("UIListLayout", holder)
+    subLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    local contentHeight = 0
 
-	for _, item in ipairs(itemList) do
-		local container = Instance.new("Frame", holder)
-		container.Size = UDim2.new(1, 0, 0, 30)
-		container.BackgroundTransparency = 1
+    for _, item in ipairs(itemList) do
+        local container = Instance.new("Frame", holder)
+        container.Size = UDim2.new(1, 0, 0, 30)
+        container.BackgroundTransparency = 1
 
-		local cb = Instance.new("TextButton", container)
-		cb.Size = UDim2.new(0, 30, 1, 0)
-		cb.Text = "☐"
-		cb.BackgroundColor3 = Color3.fromRGB(45,45,45)
-		cb.TextColor3 = Color3.new(1,1,1)
-		cb.Font = Enum.Font.Gotham
-		cb.TextSize = 16
-		Instance.new("UICorner", cb).CornerRadius = UDim.new(0, 4)
+        local cb = Instance.new("TextButton", container)
+        cb.Size = UDim2.new(0, 30, 1, 0)
+        cb.Text = "☐"
+        cb.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        cb.TextColor3 = Color3.new(1, 1, 1)
+        cb.Font = Enum.Font.Gotham
+        cb.TextSize = 16
+        Instance.new("UICorner", cb).CornerRadius = UDim.new(0, 4)
 
-		local label = Instance.new("TextLabel", container)
-		label.Size = UDim2.new(0.35, 0, 1, 0)
-		label.Position = UDim2.new(0, 35, 0, 0)
-		label.Text = item
-		label.Font = Enum.Font.Gotham
-		label.TextSize = 15
-		label.TextColor3 = Color3.new(1,1,1)
-		label.BackgroundTransparency = 1
-		label.TextXAlignment = Enum.TextXAlignment.Left
+        local label = Instance.new("TextLabel", container)
+        label.Size = UDim2.new(0.35, 0, 1, 0)
+        label.Position = UDim2.new(0, 35, 0, 0)
+        label.Text = item
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 15
+        label.TextColor3 = Color3.new(1, 1, 1)
+        label.BackgroundTransparency = 1
+        label.TextXAlignment = Enum.TextXAlignment.Left
 
-		local input = Instance.new("TextBox", container)
-		input.Size = UDim2.new(0, 50, 0.9, 0)
-		input.Position = UDim2.new(0.55, 0, 0.05, 0)
-		input.Text = "1"
-		input.TextColor3 = Color3.new(1,1,1)
-		input.BackgroundColor3 = Color3.fromRGB(35,35,35)
-		input.Font = Enum.Font.Gotham
-		input.TextSize = 14
-		Instance.new("UICorner", input).CornerRadius = UDim.new(0, 4)
+        local input = Instance.new("TextBox", container)
+        input.Size = UDim2.new(0, 50, 0.9, 0)
+        input.Position = UDim2.new(0.55, 0, 0.05, 0)
+        input.Text = "1"
+        input.TextColor3 = Color3.new(1, 1, 1)
+        input.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        input.Font = Enum.Font.Gotham
+        input.TextSize = 14
+        Instance.new("UICorner", input).CornerRadius = UDim.new(0, 4)
 
-		local toggle = Instance.new("TextButton", container)
-		toggle.Size = UDim2.new(0, 80, 0.9, 0)
-		toggle.Position = UDim2.new(1, -90, 0.05, 0)
-		toggle.Text = "Max: Off"
-		toggle.BackgroundColor3 = Color3.fromRGB(50,50,50)
-		toggle.TextColor3 = Color3.new(1,1,1)
-		toggle.Font = Enum.Font.Gotham
-		toggle.TextSize = 14
-		Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 4)
+        local toggle = Instance.new("TextButton", container)
+        toggle.Size = UDim2.new(0, 80, 0.9, 0)
+        toggle.Position = UDim2.new(1, -90, 0.05, 0)
+        toggle.Text = "Max: Off"
+        toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        toggle.TextColor3 = Color3.new(1, 1, 1)
+        toggle.Font = Enum.Font.Gotham
+        toggle.TextSize = 14
+        Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 4)
 
-		cb.MouseButton1Click:Connect(function()
-			settings[item].enabled = not settings[item].enabled
-			cb.Text = settings[item].enabled and "☑" or "☐"
-		end)
-		toggle.MouseButton1Click:Connect(function()
-			settings[item].max = not settings[item].max
-			toggle.Text = settings[item].max and "Max: On" or "Max: Off"
-		end)
-		input:GetPropertyChangedSignal("Text"):Connect(function()
-			local n = tonumber(input.Text)
-			if n then settings[item].amount = math.clamp(n, 1, 999) end
-		end)
-	end
+        cb.MouseButton1Click:Connect(function()
+            settings[item].enabled = not settings[item].enabled
+            cb.Text = settings[item].enabled and "☑" or "☐"
+        end)
+        toggle.MouseButton1Click:Connect(function()
+            settings[item].max = not settings[item].max
+            toggle.Text = settings[item].max and "Max: On" or "Max: Off"
+        end)
+        input:GetPropertyChangedSignal("Text"):Connect(function()
+            local n = tonumber(input.Text)
+            if n then settings[item].amount = math.clamp(n, 1, 999) end
+        end)
+    end
 
-	subLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		contentHeight = subLayout.AbsoluteContentSize.Y
-	end)
+    subLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        contentHeight = subLayout.AbsoluteContentSize.Y
+    end)
 
-	local isOpen = false
-	btn.MouseButton1Click:Connect(function()
-		isOpen = not isOpen
-		arrow.Text = isOpen and "▼" or "▸"
-		TweenService:Create(holder, TweenInfo.new(0.25), {
-			Size = UDim2.new(1, 0, 0, isOpen and contentHeight or 0)
-		}):Play()
-	end)
+    local isOpen = false
+    btn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        arrow.Text = isOpen and "▼" or "▸"
+        TweenService:Create(holder, TweenInfo.new(0.25), {
+            Size = UDim2.new(1, 0, 0, isOpen and contentHeight or 0)
+        }):Play()
+    end)
 end
 
 createSection("🌽 Fruits", items.Fruits)
 createSection("🛠️ Gear", items.Gears)
 
 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 end)
 
 -- BUY button
@@ -253,82 +271,75 @@ buyBtn.Size = UDim2.new(1, -20, 0, 40)
 buyBtn.Position = UDim2.new(0, 10, 1, -45)
 buyBtn.Text = "🌾 Buy Selected Items"
 buyBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-buyBtn.TextColor3 = Color3.new(1,1,1)
+buyBtn.TextColor3 = Color3.new(1, 1, 1)
 buyBtn.Font = Enum.Font.GothamBold
 buyBtn.TextSize = 18
 Instance.new("UICorner", buyBtn).CornerRadius = UDim.new(0, 8)
 
 buyBtn.MouseButton1Click:Connect(function()
-	print("🧴 BUY BUTTON CLICKED! Preparing to fire remotes...")
+    print("🧴 BUY BUTTON CLICKED! Preparing to fire remotes...")
 
-	local money = getMoney()
-	local totalSpent = 0
+    local money = getMoney()
+    local function attemptBuy(itemList)
+        local sorted = {}
+        for _, item in ipairs(itemList) do
+            if settings[item] and settings[item].enabled then
+                table.insert(sorted, item)
+            end
+        end
+        table.sort(sorted, function(a, b)
+            return (itemPrices[a] or 0) > (itemPrices[b] or 0)
+        end)
 
-	-- STEP 1: Gather and sort enabled items by price
-	local sortedItems = {}
-	for item, data in pairs(settings) do
-		if data.enabled then
-			table.insert(sortedItems, {
-				name = item,
-				price = itemPrices[item] or 1,
-				max = data.max,
-				amount = tonumber(data.amount) or 1
-			})
-		end
-	end
+        for _, item in ipairs(sorted) do
+            local price = itemPrices[item] or 1
+            local remote = table.find(items.Gears, item) and BuyGearStock or BuySeedStock
+            local bought = 0
 
-	table.sort(sortedItems, function(a, b)
-		return a.price > b.price -- Sort from most expensive to least
-	end)
+            if settings[item].max then
+                local shopStock = getStock(item)
+                local maxBuy = math.min(math.floor(money / price), shopStock)
 
-	-- STEP 2: Purchase each item in order
-	for _, entry in ipairs(sortedItems) do
-		local item = entry.name
-		local price = entry.price
-		local limit = maxStock[item] or 999
-		local amount = entry.max and math.min(math.floor(money / price), limit) or math.clamp(entry.amount, 1, limit)
-		local totalCost = price * amount
+                for i = 1, maxBuy do
+                    remote:FireServer(item, 1)
+                    money -= price
+                    bought += 1
+                    print(string.format("✅ Bought %s [%d/%d]", item, bought, maxBuy))
+                    task.wait(0.2)
+                end
+            else
+                local amount = settings[item].amount or 1
+				local limit = getStock(item)
+                local targetAmount = math.clamp(amount, 1, math.max(1, limit))
+                for i = 1, targetAmount do
+                    if money < price then break end
+                    remote:FireServer(item, 1)
+                    money -= price
+                    bought += 1
+                    print(string.format("✅ Bought %s [%d/%d]", item, i, targetAmount))
+                    task.wait(0.25)
+                end
+            end
 
-		if totalCost <= money and amount > 0 then
-			local isGear = string.find(item:lower(), "sprinkler") or item == "Trowel" or item == "Watering Can"
-			local remote = isGear and BuyGearStock or BuySeedStock
+            if bought == 0 then
+                print(string.format("❌ Could not buy %s: Not enough money or sold out", item))
+            end
+        end
+    end
 
-			local bought = 0
-for i = 1, amount do
-	if money < price then break end
-	local success, err = pcall(function()
-		remote:FireServer(item, 1)
-	end)
-	if success then
-		bought += 1
-		money -= price
-		totalSpent += price
-		print(string.format("✅ Bought %s [%d/%d]", item, bought, amount))
-	else
-		warn(string.format("❌ Failed to buy %s: %s", item, err))
-		break
-	end
-	task.wait(0.25)
-end
+    attemptBuy(items.Fruits) -- 🌽 FIRST: crops!
+    attemptBuy(items.Gears)  -- 🛠️ THEN: gears!
 
-if bought == 0 then
-	print(string.format("❌ Skipped %s: Not enough Sheckles!", item))
-end
-		else
-			print(string.format("❌ Skipped %s: Not enough Sheckles (%d needed, %d available)", item, totalCost, money))
-		end
-	end
-
-	print("💚 All purchases complete! Happy harvesting, master~ 🌱")
+    print("💚 All purchases complete! Happy harvesting, master~ 🌱")
 end)
 
 -- Left Control hotkey
 local UserInputService = game:GetService("UserInputService")
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if not gpe and input.KeyCode == Enum.KeyCode.LeftControl then
-		gui.Enabled = not gui.Enabled
-	end
+    if not gpe and input.KeyCode == Enum.KeyCode.LeftControl then
+        gui.Enabled = not gui.Enabled
+    end
 end)
 
 print("🌟 UI loaded without total cost tracking~ Simplified and snappy for the wealthy life! 🚀")
