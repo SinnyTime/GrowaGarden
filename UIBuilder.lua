@@ -114,8 +114,8 @@ autoBuyFrame.Visible = true
 footer.Size = UDim2.new(1, 0, 0, 50)
 footer.Position = UDim2.new(0, 0, 1, -50)
 footer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-footer.BorderSizePixel = 0
 footer.ZIndex = 2
+scroll.BorderSizePixel = 0
 Instance.new("UICorner", footer).CornerRadius = UDim.new(0, 8)
 
 
