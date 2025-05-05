@@ -109,6 +109,14 @@ end
 
 local autoBuyFrame = createTabContent()
 autoBuyFrame.Visible = true
+	
+	local footer = Instance.new("Frame", autoBuyFrame)
+footer.Size = UDim2.new(1, 0, 0, 50)
+footer.Position = UDim2.new(0, 0, 1, -50)
+footer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+footer.BorderSizePixel = 0
+Instance.new("UICorner", footer).CornerRadius = UDim.new(0, 8)
+
 
 	local scroll = Instance.new("ScrollingFrame", autoBuyFrame)
 scroll.Size = UDim2.new(1, 0, 1, 0)
@@ -276,9 +284,9 @@ addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming S
 	end)
 
 	-- 🛒 Buy Button
-local buyButton = Instance.new("TextButton", autoBuyFrame)
+local buyButton = Instance.new("TextButton", footer)
 buyButton.Size = UDim2.new(0, 160, 0, 36)
-buyButton.Position = UDim2.new(0.5, -80, 1, -20) -- changed from -40 to -20
+buyButton.Position = UDim2.new(0.5, -80, 0.5, -18)
 buyButton.Text = "Buy Stock"
 buyButton.Font = Enum.Font.GothamBold
 buyButton.TextSize = 16
