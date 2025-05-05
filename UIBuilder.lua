@@ -307,20 +307,21 @@ buyButton.MouseButton1Click:Connect(function()
 end)
 
 	return {
-		GUI = gui,
-		MainFrame = main,
-		BuyButton = buyButton,
-		RefreshStock = function(getStock)
-			for itemName, data in pairs(settings) do
-				if type(data) == "table" then
-					local isGear = table.find(items.Gears, itemName) ~= nil
-					local stock = getStock(itemName, isGear)
-					-- You could optionally update the button text here if you want
-					print(`[UIBuilder] {itemName} has {stock} in stock`)
-				end
+	GUI = gui,
+	MainFrame = main,
+	BuyButton = buyButton,
+	StockTab = tabContentFrames["Stock"],
+	RefreshStock = function(getStock)
+		for itemName, data in pairs(settings) do
+			if type(data) == "table" then
+				local isGear = table.find(items.Gears, itemName) ~= nil
+				local stock = getStock(itemName, isGear)
+				-- You could optionally update the button text here if you want
+				print(`[UIBuilder] {itemName} has {stock} in stock`)
 			end
 		end
-	}
-end
+	end
+}
+
 
 return buildUI
