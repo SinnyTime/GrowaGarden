@@ -275,6 +275,28 @@ addPlaceholder(tabContentFrames["Teleports"], "🗺️ Teleport Options Coming S
 		scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 	end)
 
+	-- 🛒 Buy Button
+local buyButton = Instance.new("TextButton", autoBuyFrame)
+buyButton.Size = UDim2.new(0, 160, 0, 36)
+buyButton.Position = UDim2.new(0.5, -80, 1, -40)
+buyButton.Text = "Buy Stock"
+buyButton.Font = Enum.Font.GothamBold
+buyButton.TextSize = 16
+buyButton.TextColor3 = Color3.new(1, 1, 1)
+buyButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
+Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
+
+buyButton.MouseButton1Click:Connect(function()
+	for itemName, data in pairs(settings) do
+		if data.enabled then
+			local quantity = data.max and "MAX" or data.amount
+			print("Buying:", itemName, "Amount:", quantity)
+			-- You can replace this print with your buy function, like:
+			-- game:GetService("ReplicatedStorage").Buy:FireServer(itemName, quantity)
+		end
+	end
+end)
+
 	return {
 		GUI = gui,
 		MainFrame = main
