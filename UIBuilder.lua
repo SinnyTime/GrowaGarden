@@ -2,6 +2,17 @@
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local tabContentFrames = {}
+
+
+local function showTab(name)
+	for tabName, frame in pairs(tabContentFrames) do
+		frame.Visible = (tabName == name)
+	end
+end
+
+
+
 
 local function buildUI(settings, items)
 	local gui = Instance.new("ScreenGui")
@@ -134,9 +145,6 @@ local autoTabBtn = createTab("AutoBuy")
 local stockTabBtn = createTab("Stock")
 local tpTabBtn = createTab("Teleports")
 
-
-	local tabContentFrames = {}
-
 local function createTabContent()
 	local frame = Instance.new("Frame", main)
 	frame.Size = UDim2.new(1, -20, 1, -120)
@@ -148,6 +156,19 @@ end
 
 local autoBuyFrame = createTabContent()
 autoBuyFrame.Visible = true
+	autoBuyFrame.Parent = main
+	
+	tabContentFrames["AutoBuy"] = autoBuyFrame
+
+local stockFrame = createTabContent()
+stockFrame.Parent = main
+tabContentFrames["Stock"] = stockFrame
+
+local tpFrame = createTabContent()
+tpFrame.Parent = main
+tabContentFrames["Teleports"] = tpFrame
+
+
 
 -- 🧱 Scrollable area for item sections
 	local scrollHolder = Instance.new("Frame", autoBuyFrame)
@@ -346,6 +367,17 @@ autoBuyFrame.Visible = true
 			label.BackgroundTransparency = 1
 		end
 	end
+
+	local buyButton = Instance.new("TextButton", autoBuyFrame)
+buyButton.Size = UDim2.new(0, 160, 0, 36)
+buyButton.Position = UDim2.new(0.5, -80, 1, -40)
+buyButton.Text = "Buy Stock"
+buyButton.Font = Enum.Font.GothamBold
+buyButton.TextSize = 16
+buyButton.TextColor3 = Color3.new(1, 1, 1)
+buyButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
+Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 6)
+
 
 	return {
 		GUI = gui,
