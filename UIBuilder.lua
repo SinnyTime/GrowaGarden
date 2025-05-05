@@ -69,18 +69,31 @@ local function buildUI(settings, items)
 		end
 	end)
 
-	local tabHolder = Instance.new("Frame", main)
-tabHolder.Size = UDim2.new(1, -20, 0, 30)
-tabHolder.Position = UDim2.new(0, 10, 0, 35)
+local tabScroll = Instance.new("ScrollingFrame", main)
+tabScroll.Size = UDim2.new(1, -20, 0, 40)
+tabScroll.Position = UDim2.new(0, 10, 0, 35)
+tabScroll.CanvasSize = UDim2.new(0, 0, 1, 0)
+tabScroll.BackgroundTransparency = 1
+tabScroll.BorderSizePixel = 0
+tabScroll.ScrollBarThickness = 4
+tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
+tabScroll.HorizontalScrollBarInset = Enum.ScrollBarInset.Always
+tabScroll.ScrollingDirection = Enum.ScrollingDirection.X
+
+local tabHolder = Instance.new("Frame", tabScroll)
+tabHolder.Size = UDim2.new(0, 0, 1, 0)
 tabHolder.BackgroundTransparency = 1
+tabHolder.AutomaticSize = Enum.AutomaticSize.X
 
 local tabLayout = Instance.new("UIListLayout", tabHolder)
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 10)
 
+
 local function createTab(name)
-	local btn = Instance.new("TextButton", tabHolder)
+	local btn = Instance.new("TextButton")
+	btn.Parent = tabHolder
 	btn.Size = UDim2.new(0, 150, 1, 0)
 	btn.Text = name
 	btn.Font = Enum.Font.GothamBold
