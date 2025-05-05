@@ -322,6 +322,7 @@ end)
 		end
 	end
 }
+end
 
 
 return buildUI
