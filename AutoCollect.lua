@@ -2,8 +2,16 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 
-local UIBuilder = loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/UIBuilder.lua"))()
-local ItemData = require(loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/ItemData.lua"))())
+local BASE_URL = "https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/"
+local function import(name)
+	local src = game:HttpGet(BASE_URL .. name .. ".lua")
+	local module = loadstring(src)
+	assert(module, "Failed to load module: " .. name)
+	return module()
+end
+
+local UIBuilder = import("UIBuilder")
+local ItemData = import("ItemData")
 
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
@@ -13,7 +21,7 @@ local selectedCrops = {}
 local selectedVariants = {}
 local selectedParticles = {}
 
--- Utility: Check if all selected particles are on the fruit
+-- ✅ Check if fruit has all selected particles
 local function hasRequiredParticles(fruit)
 	for particle, enabled in pairs(selectedParticles) do
 		if enabled and not fruit:FindFirstChild(particle) then
@@ -23,9 +31,9 @@ local function hasRequiredParticles(fruit)
 	return true
 end
 
--- Collection Logic
+-- 🌾 Core Auto-Collect Logic
 local function collectFruits()
-	for _, farm in pairs(workspace:GetChildren()) do
+	for _, farm in pairs(Workspace:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
 			local ownerVal = farm:FindFirstChild("Owner")
 			if ownerVal and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
@@ -51,7 +59,7 @@ local function collectFruits()
 	end
 end
 
--- Build the UI tab
+-- 📋 UI Tab Constructor
 return function(tab)
 	UIBuilder.CreateLabel(tab, "Select Crops:")
 	for _, crop in ipairs(crops) do
