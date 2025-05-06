@@ -159,8 +159,8 @@ petsTabBtn.MouseButton1Click:Connect(function() showTab("Pets") end)
 sellTabBtn.MouseButton1Click:Connect(function() showTab("Auto Sell") end)
 collectTabBtn.MouseButton1Click:Connect(function() showTab("Auto Collect") end)
 
-	-- 🟡 AutoCollect Hook
-local collectTab = require(loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/AutoCollect.lua"))())
+-- 🟡 AutoCollect Hook
+local collectTab = loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/AutoCollect.lua"))()
 collectTab(tabContentFrames["Auto Collect"])
 
 
