@@ -159,6 +159,11 @@ petsTabBtn.MouseButton1Click:Connect(function() showTab("Pets") end)
 sellTabBtn.MouseButton1Click:Connect(function() showTab("Auto Sell") end)
 collectTabBtn.MouseButton1Click:Connect(function() showTab("Auto Collect") end)
 
+	-- 🟡 AutoCollect Hook
+local collectTab = require(loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/AutoCollect.lua"))())
+collectTab(tabContentFrames["Auto Collect"])
+
+
 	-- Optional placeholder text
 local function addPlaceholder(frame, text)
 	local label = Instance.new("TextLabel", frame)
@@ -183,7 +188,6 @@ layout.VerticalAlignment = Enum.VerticalAlignment.Top
 
 		addPlaceholder(tabContentFrames["Pets"], "🐾 Pet system coming soon!")
 addPlaceholder(tabContentFrames["Auto Sell"], "💰 Auto-sell system in progress!")
-addPlaceholder(tabContentFrames["Auto Collect"], "🌾 Auto-collect setup coming soon!")
 
 
 	
