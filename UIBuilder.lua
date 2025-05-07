@@ -97,15 +97,12 @@ local function createTab(name)
 	return btn
 end
 
-local autoTabBtn = createTab("AutoBuy")
 local stockTabBtn = createTab("Stock")
-local tpTabBtn = createTab("Teleports")
-local petsTabBtn = createTab("Pets")
-local sellTabBtn = createTab("Auto Sell")
 local collectTabBtn = createTab("Auto Collect")
-
-
-
+local sellTabBtn = createTab("Auto Sell")
+local autoTabBtn = createTab("AutoBuy")
+local petsTabBtn = createTab("Pets")
+local tpTabBtn = createTab("Teleports")
 
 	local tabContentFrames = {}
 
@@ -138,12 +135,12 @@ footer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 footer.BorderSizePixel = 0
 Instance.new("UICorner", footer).CornerRadius = UDim.new(0, 8)
 	
-tabContentFrames["AutoBuy"] = autoBuyFrame
 tabContentFrames["Stock"] = createTabContent()
-tabContentFrames["Teleports"] = createTabContent()
-tabContentFrames["Pets"] = createTabContent()
-tabContentFrames["Auto Sell"] = createTabContent()
 tabContentFrames["Auto Collect"] = createTabContent()
+tabContentFrames["Auto Sell"] = createTabContent()
+tabContentFrames["AutoBuy"] = createTabContent()
+tabContentFrames["Pets"] = createTabContent()
+tabContentFrames["Teleports"] = createTabContent()
 
 	-- Tab switching logic
 local function showTab(name)
@@ -152,12 +149,12 @@ local function showTab(name)
 	end
 end
 
-autoTabBtn.MouseButton1Click:Connect(function() showTab("AutoBuy") end)
 stockTabBtn.MouseButton1Click:Connect(function() showTab("Stock") end)
-tpTabBtn.MouseButton1Click:Connect(function() showTab("Teleports") end)
-petsTabBtn.MouseButton1Click:Connect(function() showTab("Pets") end)
-sellTabBtn.MouseButton1Click:Connect(function() showTab("Auto Sell") end)
 collectTabBtn.MouseButton1Click:Connect(function() showTab("Auto Collect") end)
+sellTabBtn.MouseButton1Click:Connect(function() showTab("Auto Sell") end)
+autoTabBtn.MouseButton1Click:Connect(function() showTab("AutoBuy") end)
+petsTabBtn.MouseButton1Click:Connect(function() showTab("Pets") end)
+tpTabBtn.MouseButton1Click:Connect(function() showTab("Teleports") end)
 
 -- 🟡 AutoCollect Hook
 local collectTab = loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/AutoCollect.lua"))()
