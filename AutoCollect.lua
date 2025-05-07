@@ -144,18 +144,19 @@ local function collectFruits()
 				continue
 			end
 	
-			-- Look down *after* reaching the hover point
 			local cam = Workspace.CurrentCamera
-			if cam then
-				task.spawn(function()
-					for i = 1, 10 do
-						cam.CFrame = CFrame.lookAt(cam.CFrame.Position, targetPart.Position)
-						task.wait(0.05)
-					end
-				end)
+			local lookTarget = targetPart.Position
+			
+			local forceLookConn
+			forceLookConn = game:GetService("RunService").RenderStepped:Connect(function()
+				cam.CFrame = CFrame.lookAt(cam.CFrame.Position, lookTarget)
+			end)
+			
+			task.wait(0.5) -- wait while camera is actively being forced
+			
+			if forceLookConn then
+				forceLookConn:Disconnect()
 			end
-	
-			task.wait(0.2)
 	
 			-- Try multiple times until prompt disappears
 			local success = false
