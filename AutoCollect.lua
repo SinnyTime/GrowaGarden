@@ -27,10 +27,20 @@ for particle in pairs(mutationMap) do table.insert(particles, particle) end
 local selectedCrops = {}
 local selectedVariants = {}
 local selectedParticles = {}
+local seenUnmatchedFruits = {}
+
+local function deepFindParticle(fruit, particleName)
+	for _, descendant in ipairs(fruit:GetDescendants()) do
+		if descendant.Name == particleName then
+			return true
+		end
+	end
+	return false
+end
 
 local function hasRequiredParticles(fruit)
 	for particle, enabled in pairs(selectedParticles) do
-		if enabled and not fruit:FindFirstChild(particle) then
+		if enabled and not deepFindParticle(fruit, particle) then
 			return false
 		end
 	end
@@ -46,11 +56,21 @@ local function getReasonSkipped(fruit)
 		return "❌ Variant not selected: " .. variant
 	end
 	for particle, required in pairs(selectedParticles) do
-		if required and not fruit:FindFirstChild(particle) then
+		if required and not deepFindParticle(fruit, particle) then
 			return "❌ Missing mutation: " .. mutationMap[particle]
 		end
 	end
 	return nil
+end
+
+local function getFruitParts(crop)
+	local found = {}
+	for _, descendant in ipairs(crop:GetDescendants()) do
+		if descendant:IsA("Model") or descendant:IsA("Part") then
+			table.insert(found, descendant)
+		end
+	end
+	return found
 end
 
 local function collectFruits()
@@ -69,11 +89,9 @@ local function collectFruits()
 			local owner = farm:FindFirstChild("Important")
 				and farm.Important:FindFirstChild("Data")
 				and farm.Important.Data:FindFirstChild("Owner")
-			if owner and owner:IsA("StringValue") then
-				if owner.Value == LocalPlayer.Name then
-					playerFarm = farm
-					break
-				end
+			if owner and owner:IsA("StringValue") and owner.Value == LocalPlayer.Name then
+				playerFarm = farm
+				break
 			end
 		end
 	end
@@ -90,10 +108,15 @@ local function collectFruits()
 	end
 
 	for _, crop in ipairs(plants:GetChildren()) do
-		local fruitFolder = crop:FindFirstChild("Fruits") or crop
-		for _, fruit in ipairs(fruitFolder:GetChildren()) do
+		for _, fruit in ipairs(getFruitParts(crop)) do
 			if not (fruit:IsA("Model") or fruit:IsA("Part")) then continue end
-			if not table.find(crops, fruit.Name) then continue end
+			if not table.find(crops, fruit.Name) then
+				if not seenUnmatchedFruits[fruit.Name] then
+					seenUnmatchedFruits[fruit.Name] = true
+					print("👀 Unmatched fruit seen in farm:", fruit.Name)
+				end
+				continue
+			end
 
 			local name = fruit.Name
 			local variant = fruit:GetAttribute("Variant") or "Normal"
