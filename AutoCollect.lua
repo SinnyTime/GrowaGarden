@@ -15,7 +15,16 @@ local ItemData = import("ItemData")
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
 
-local selectedCrops, selectedVariants = {}, {}
+local mutationMap = {
+	FrozenParticle = "Frozen",
+	WetParticle = "Wet",
+	ChilledParticle = "Chilled",
+	ShockedParticle = "Shocked"
+}
+
+local selectedCrops, selectedVariants, selectedMutations = {}, {}, {}
+for particle in pairs(mutationMap) do selectedMutations[particle] = false end
+
 local flyingBP, flyingGyro, noclipConn
 
 -- Stable flying system
@@ -121,13 +130,20 @@ local function collectFruits()
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			local variantObj = fruit:FindFirstChild("Variant")
 			local variant = (variantObj and typeof(variantObj.Value) == "string" and variantObj.Value) or "Normal"
-
 			if not (variant == "Normal" or variant == "Gold" or variant == "Rainbow") then
 				variant = "Normal"
 			end
-			if not selectedVariants[variant] then
-				continue
+			if not selectedVariants[variant] then continue end
+
+			-- Mutation check
+			local hasAllMutations = true
+			for particle, selected in pairs(selectedMutations) do
+				if selected and not fruit:FindFirstChildWhichIsA(particle, true) then
+					hasAllMutations = false
+					break
+				end
 			end
+			if not hasAllMutations then continue end
 
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 			local part = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
@@ -242,6 +258,13 @@ return function(tab)
 		selectedVariants[variant] = false
 		createCheckbox(scroll, variant, function(state)
 			selectedVariants[variant] = state
+		end)
+	end
+
+	createHeader(scroll, "❄️ Required Mutations")
+	for particle, displayName in pairs(mutationMap) do
+		createCheckbox(scroll, displayName, function(state)
+			selectedMutations[particle] = state
 		end)
 	end
 
