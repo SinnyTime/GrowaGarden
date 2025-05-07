@@ -128,17 +128,23 @@ end
 -- Sell filtered tools
 local function sellItems(items)
 	print("💰 Selling items...")
-	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-	local originalPos = root.Position
+	local character = LocalPlayer.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (root and humanoid) then return end
 
+	local originalPos = root.Position
 	teleportTo(SELL_POSITION)
 	task.wait(RETURN_DELAY)
 
 	for _, tool in ipairs(items) do
-		print(" ➤ Selling:", tool.Name)
+		print(" ➤ Equipping:", tool.Name)
+		humanoid:EquipTool(tool)
+		task.wait(0.2)
+
+		print("    🔥 Firing sell event:", tool.Name)
 		SellEvent:FireServer(tool)
-		task.wait(0.15)
+		task.wait(0.2)
 	end
 
 	task.wait(RETURN_DELAY)
