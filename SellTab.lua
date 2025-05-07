@@ -74,6 +74,10 @@ end
 
 -- Check if tool should be sold
 local function isToolValid(tool)
+	if tool.Name:find("Seed") then
+		print("❌ Skipped: Seed items not allowed.")
+		return false
+	end
 	local fruitName, variant, mutations = parseToolName(tool.Name)
 	print(`[Debug] Tool: {tool.Name} | Parsed: Fruit = {fruitName}, Variant = {variant}, Mutations = {#mutations}`)
 
