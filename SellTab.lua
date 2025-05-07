@@ -7,8 +7,9 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- RemoteEvents
-local SellEvent = ReplicatedStorage:WaitForChild("SellItem")
-local EquipEvent = ReplicatedStorage:WaitForChild("EquipItem")
+local GameEvents = ReplicatedStorage:WaitForChild("GameEvents")
+local SellEvent = GameEvents:WaitForChild("Sell_Item")
+local SellAllEvent = GameEvents:WaitForChild("Sell_Inventory")
 
 -- Configuration
 local SELL_POSITION = Vector3.new(61, 3, 0)
@@ -36,8 +37,8 @@ local selectedMutations = {}
 
 -- Utility Functions
 local function hasBadMutations(item)
-	for particleName in pairs(mutationMap) do
-		if item:FindFirstChild(particleName) and not selectedMutations[particleName] then
+	for mutation in pairs(mutationMap) do
+		if item:FindFirstChild(mutation) and not selectedMutations[mutation] then
 			return true
 		end
 	end
@@ -45,39 +46,57 @@ local function hasBadMutations(item)
 end
 
 local function teleportTo(position)
-	local character = LocalPlayer.Character
-	if character and character:FindFirstChild("HumanoidRootPart") then
-		character:MoveTo(position)
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("HumanoidRootPart") then
+		char:MoveTo(position)
 	end
 end
 
 local function getInventoryItems()
 	local backpack = LocalPlayer:WaitForChild("Backpack")
-	local inventoryItems = {}
-	for _, item in ipairs(backpack:GetChildren()) do
-		if table.find(fruits, item.Name) and selectedFruits[item.Name] and not hasBadMutations(item) then
-			table.insert(inventoryItems, item)
+	local items = {}
+
+	for _, tool in ipairs(backpack:GetChildren()) do
+		for _, fruitName in ipairs(fruits) do
+			if tool.Name:match(fruitName) and selectedFruits[fruitName] and not hasBadMutations(tool) then
+				table.insert(items, tool)
+				break
+			end
 		end
 	end
-	return inventoryItems
+
+	return items
 end
 
 local function sellItems(items)
-	local originalPosition = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position
-	if not originalPosition then return end
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local originalPos = root.Position
 
 	teleportTo(SELL_POSITION)
 	task.wait(RETURN_DELAY)
 
-	for _, item in ipairs(items) do
-		EquipEvent:FireServer(item.Name)
-		task.wait(0.1)
-		SellEvent:FireServer(item.Name)
+	for _, tool in ipairs(items) do
+		SellEvent:FireServer(tool)
 		task.wait(0.1)
 	end
 
 	task.wait(RETURN_DELAY)
-	teleportTo(originalPosition)
+	teleportTo(originalPos)
+end
+
+local function sellFullInventory()
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local originalPos = root.Position
+
+	teleportTo(SELL_POSITION)
+	task.wait(RETURN_DELAY)
+
+	SellAllEvent:FireServer()
+	task.wait(RETURN_DELAY)
+
+	teleportTo(originalPos)
 end
 
 -- UI Construction
@@ -142,7 +161,7 @@ return function(tab)
 		end)
 	end
 
-	-- Populate Fruit Checkboxes
+	-- Fruits
 	createHeader("🍓 Select Fruits")
 	for _, fruit in ipairs(fruits) do
 		selectedFruits[fruit] = false
@@ -151,48 +170,43 @@ return function(tab)
 		end)
 	end
 
-	-- Populate Mutation Checkboxes
-	createHeader("🧬 Select Mutations")
-	for particleName, displayName in pairs(mutationMap) do
-		selectedMutations[particleName] = false
-		createCheckbox(displayName, function(state)
-			selectedMutations[particleName] = state
+	-- Mutations
+	createHeader("🧬 Require Mutations")
+	for mutation, label in pairs(mutationMap) do
+		selectedMutations[mutation] = false
+		createCheckbox(label, function(state)
+			selectedMutations[mutation] = state
 		end)
 	end
 
-	-- Footer Buttons
+	-- Footer
 	local footer = Instance.new("Frame", tab)
 	footer.Size = UDim2.new(1, 0, 0, 50)
 	footer.Position = UDim2.new(0, 0, 1, -50)
 	footer.BackgroundTransparency = 1
 
-	local sellInventoryButton = Instance.new("TextButton", footer)
-	sellInventoryButton.Size = UDim2.new(0, 160, 0, 36)
-	sellInventoryButton.Position = UDim2.new(0.5, -170, 0.5, -18)
-	sellInventoryButton.Text = "Sell Inventory"
-	sellInventoryButton.Font = Enum.Font.GothamBold
-	sellInventoryButton.TextSize = 16
-	sellInventoryButton.TextColor3 = Color3.new(1, 1, 1)
-	sellInventoryButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
-	Instance.new("UICorner", sellInventoryButton).CornerRadius = UDim.new(0, 6)
-
-	local sellSelectedButton = Instance.new("TextButton", footer)
-	sellSelectedButton.Size = UDim2.new(0, 160, 0, 36)
-	sellSelectedButton.Position = UDim2.new(0.5, 10, 0.5, -18)
-	sellSelectedButton.Text = "Sell Selected"
-	sellSelectedButton.Font = Enum.Font.GothamBold
-	sellSelectedButton.TextSize = 16
-	sellSelectedButton.TextColor3 = Color3.new(1, 1, 1)
-	sellSelectedButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
-	Instance.new("UICorner", sellSelectedButton).CornerRadius = UDim.new(0, 6)
-
-	sellInventoryButton.MouseButton1Click:Connect(function()
+	local sellSelected = Instance.new("TextButton", footer)
+	sellSelected.Size = UDim2.new(0, 160, 0, 36)
+	sellSelected.Position = UDim2.new(0.5, -170, 0.5, -18)
+	sellSelected.Text = "Sell Selected"
+	sellSelected.Font = Enum.Font.GothamBold
+	sellSelected.TextSize = 16
+	sellSelected.TextColor3 = Color3.new(1, 1, 1)
+	sellSelected.BackgroundColor3 = Color3.fromRGB(80, 160, 80)
+	Instance.new("UICorner", sellSelected).CornerRadius = UDim.new(0, 6)
+	sellSelected.MouseButton1Click:Connect(function()
 		local items = getInventoryItems()
 		sellItems(items)
 	end)
 
-	sellSelectedButton.MouseButton1Click:Connect(function()
-		local items = getInventoryItems()
-		sellItems(items)
-	end)
+	local sellAll = Instance.new("TextButton", footer)
+	sellAll.Size = UDim2.new(0, 160, 0, 36)
+	sellAll.Position = UDim2.new(0.5, 10, 0.5, -18)
+	sellAll.Text = "Sell Inventory"
+	sellAll.Font = Enum.Font.GothamBold
+	sellAll.TextSize = 16
+	sellAll.TextColor3 = Color3.new(1, 1, 1)
+	sellAll.BackgroundColor3 = Color3.fromRGB(160, 80, 80)
+	Instance.new("UICorner", sellAll).CornerRadius = UDim.new(0, 6)
+	sellAll.MouseButton1Click:Connect(sellFullInventory)
 end
