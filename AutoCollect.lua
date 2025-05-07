@@ -15,26 +15,27 @@ local ItemData = import("ItemData")
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
 
--- prettier labels → internal lookup for mutation particles
 local mutationMap = {
-	Frozen = "FrozenParticle",
-	Wet = "WetParticle",
-	Chilled = "ChilledParticle",
-	Shocked = "ShockedParticle"
+	FrozenParticle = "Frozen",
+	WetParticle = "Wet",
+	ChilledParticle = "Chilled",
+	ShockedParticle = "Shocked"
 }
+local particles = {} -- raw keys for filtering
+for particle in pairs(mutationMap) do table.insert(particles, particle) end
 
 local selectedCrops = {}
 local selectedVariants = {}
-local selectedMutations = {}
+local selectedParticles = {}
 
-local function hasRequiredMutations(fruit)
-	for label, particle in pairs(mutationMap) do
-		if selectedMutations[label] then
-			if fruit:FindFirstChild(particle) then
-				print(`🧪 Found mutation "{label}" on {fruit.Name}`)
-			else
-				print(`❌ Missing mutation "{label}" on {fruit.Name}`)
+local function hasRequiredParticles(fruit)
+	for particle, enabled in pairs(selectedParticles) do
+		if enabled then
+			if not fruit:FindFirstChild(particle) then
+				print("❌ Missing:", mutationMap[particle], "on", fruit.Name)
 				return false
+			else
+				print("✅ Found:", mutationMap[particle], "on", fruit.Name)
 			end
 		end
 	end
@@ -43,75 +44,77 @@ end
 
 local function collectFruits()
 	print("🌾 Beginning fruit collection...")
+	local collected, skipped = 0, 0
 
-	local collected = 0
-	local skipped = 0
+	local root = Workspace:FindFirstChild("Farm")
+	if not root then
+		warn("❌ No 'Farm' folder found in Workspace.")
+		return
+	end
 
-	for _, farm in ipairs(Workspace:GetChildren()) do
-		print("🔍 Checking object in workspace:", farm.Name)
-
+	local playerFarm = nil
+	for _, farm in ipairs(root:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
-			print("🏡 Found Farm folder.")
+			local owner = farm:FindFirstChild("Important")
+				and farm.Important:FindFirstChild("Data")
+				and farm.Important.Data:FindFirstChild("Owner")
+			if owner and owner:IsA("StringValue") then
+				print("🔎 Found owner value:", owner.Value)
+				if owner.Value == LocalPlayer.Name then
+					playerFarm = farm
+					print("✅ Matched player farm!")
+					break
+				end
+			else
+				print("❌ No valid Owner value in", farm:GetFullName())
+			end
+		end
+	end
 
-			local ownerVal = farm:FindFirstChild("Owner")
-			if not ownerVal then
-				print("❌ No 'Owner' StringValue found.")
+	if not playerFarm then
+		warn("❌ Could not find your farm.")
+		return
+	end
+
+	local plants = playerFarm:FindFirstChild("Objects_Physical")
+	if not plants then
+		warn("❌ No 'Objects_Physical' folder found in your farm.")
+		return
+	end
+
+	for _, crop in ipairs(plants:GetChildren()) do
+		local fruitFolder = crop:FindFirstChild("Fruits") or crop
+		for _, fruit in ipairs(fruitFolder:GetChildren()) do
+			local name = fruit.Name
+			local variant = fruit:GetAttribute("Variant") or "Normal"
+			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
+
+			if not selectedCrops[name] then
+				skipped += 1
+				print("⚪ Skipped", name, "(crop not selected)")
 				continue
 			end
 
-			print("👤 Owner check:", ownerVal.Value)
+			if not selectedVariants[variant] then
+				skipped += 1
+				print("⚪ Skipped", name, "(variant not selected:", variant .. ")")
+				continue
+			end
 
-			if ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
-				print("✅ This farm belongs to the local player.")
+			if not hasRequiredParticles(fruit) then
+				skipped += 1
+				print("⚪ Skipped", name, "(missing required mutations)")
+				continue
+			end
 
-				local plants = farm:FindFirstChild("Plants_Physical")
-				if not plants then
-					print("⚠️ No Plants_Physical folder. Using Farm folder instead.")
-					plants = farm
-				end
-
-				for _, crop in ipairs(plants:GetChildren()) do
-					print("🌱 Crop found:", crop.Name)
-
-					local fruitFolder = crop:FindFirstChild("Fruits") or crop
-					for _, fruit in ipairs(fruitFolder:GetChildren()) do
-						print("🍒 Checking fruit:", fruit.Name)
-
-						local name = fruit.Name
-						local variant = fruit:GetAttribute("Variant") or "Normal"
-						local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
-
-						if not selectedCrops[name] then
-							skipped += 1
-							print(`⚪ Skipped: "{name}" — not selected`)
-							continue
-						end
-
-						if not selectedVariants[variant] then
-							skipped += 1
-							print(`⚪ Skipped: "{name}" — variant "{variant}" not selected`)
-							continue
-						end
-
-						if not hasRequiredMutations(fruit) then
-							skipped += 1
-							print(`⚪ Skipped: "{name}" — mutation mismatch`)
-							continue
-						end
-
-						if prompt then
-							print(`✨ Found prompt for {name}, firing...`)
-							fireproximityprompt(prompt)
-							collected += 1
-							task.wait(0.1)
-						else
-							print(`⚠️ No prompt on {name}. Skipped.`)
-							skipped += 1
-						end
-					end
-				end
+			if prompt then
+				fireproximityprompt(prompt)
+				collected += 1
+				print("✅ Collected:", name, "(variant:", variant .. ")")
+				task.wait(0.1)
 			else
-				print("⛔ Skipping farm not owned by player.")
+				skipped += 1
+				print("⚠️ No prompt found on:", name)
 			end
 		end
 	end
@@ -119,6 +122,7 @@ local function collectFruits()
 	print(`✅ Fruit collection complete. Collected: {collected}, Skipped: {skipped}`)
 end
 
+-- UI Helpers
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
@@ -165,7 +169,6 @@ local function createCheckbox(parent, labelText, callback)
 	end)
 end
 
--- 📋 UI Constructor
 return function(tab)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(1, 0, 1, -50)
@@ -200,10 +203,10 @@ return function(tab)
 	end
 
 	createHeader(scroll, "🧬 Select Mutations")
-	for label, _ in pairs(mutationMap) do
-		selectedMutations[label] = false
-		createCheckbox(scroll, label, function(state)
-			selectedMutations[label] = state
+	for _, particle in ipairs(particles) do
+		selectedParticles[particle] = false
+		createCheckbox(scroll, mutationMap[particle], function(state)
+			selectedParticles[particle] = state
 		end)
 	end
 
