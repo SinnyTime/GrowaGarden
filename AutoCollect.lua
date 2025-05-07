@@ -109,7 +109,14 @@ local function collectFruits()
 
 	for _, crop in ipairs(plants:GetChildren()) do
 	local cropName = crop.Name
-	if not selectedCrops[cropName] then continue end
+	local matchFound = false
+	for selected, enabled in pairs(selectedCrops) do
+		if enabled and cropName:lower():gsub("%s+", "") == selected:lower():gsub("%s+", "") then
+			matchFound = true
+			break
+		end
+	end
+	if not matchFound then continue end
 
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			local variant = fruit:GetAttribute("Variant")
