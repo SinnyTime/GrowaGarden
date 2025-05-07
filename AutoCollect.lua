@@ -122,7 +122,7 @@ local function collectFruits()
 			if not (prompt and targetPart) then skipped += 1 continue end
 	
 			-- Adjust positioning
-			local above = targetPart.Position + Vector3.new(0, 3.5, 0)
+			local above = targetPart.Position + Vector3.new(0, 2, 0)
 			moveTo(above)
 			task.wait(0.4)
 	
