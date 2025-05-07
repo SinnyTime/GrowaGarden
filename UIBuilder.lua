@@ -354,8 +354,6 @@ buyButton.MouseButton1Click:Connect(function()
 		if data.enabled then
 			local quantity = data.max and "MAX" or data.amount
 			print("Buying:", itemName, "Amount:", quantity)
-			-- You can replace this print with your buy function, like:
-			-- game:GetService("ReplicatedStorage").Buy:FireServer(itemName, quantity)
 		end
 	end
 end)
@@ -370,8 +368,6 @@ end)
 			if type(data) == "table" then
 				local isGear = table.find(items.Gears, itemName) ~= nil
 				local stock = getStock(itemName, isGear)
-				-- You could optionally update the button text here if you want
-				print(`[UIBuilder] {itemName} has {stock} in stock`)
 			end
 		end
 	end
