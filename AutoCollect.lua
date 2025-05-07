@@ -106,11 +106,11 @@ local function collectFruits()
 	local returnPos = playerFarm:FindFirstChild("Sign") and playerFarm.Sign:FindFirstChild("Core_Part") and playerFarm.Sign.Core_Part.Position
 
 	enableFly()
-	
+
 	for _, crop in ipairs(plants:GetChildren()) do
-		local cropName = crop.Name
-		if not selectedCrops[cropName] then continue end
-	
+	local cropName = crop.Name
+	if not selectedCrops[cropName] then continue end
+
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			if not selectedVariants[variant] then continue end
@@ -119,63 +119,35 @@ local function collectFruits()
 			local targetPart = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
 			if not (prompt and targetPart) then skipped += 1 continue end
 	
-			prompt.MaxActivationDistance = 9999
-			prompt.RequiresLineOfSight = false
-			prompt.HoldDuration = 0
+			-- Adjust positioning
+			local above = targetPart.Position + Vector3.new(0, 1.5, 0)
+			moveTo(above)
+			task.wait(0.4)
 	
-			-- Fly above target
-			local hoverPos = targetPart.Position + Vector3.new(0, 4, 0)
-			moveTo(hoverPos)
-	
-			-- Wait until we're close enough to be safely above
-			local reached = false
-			for _ = 1, 30 do
-				local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-				if root and (root.Position - hoverPos).Magnitude <= 1 then
-					reached = true
-					break
-				end
-				task.wait(0.1)
-			end
-	
-			if not reached then
-				warn("⚠️ Failed to reach fruit", fruit.Name)
-				skipped += 1
-				continue
-			end
-	
+			-- Look straight down
 			local cam = Workspace.CurrentCamera
-			local lookTarget = targetPart.Position
-			
-			local forceLookConn
-			forceLookConn = game:GetService("RunService").RenderStepped:Connect(function()
-				cam.CFrame = CFrame.lookAt(cam.CFrame.Position, lookTarget)
-			end)
-			
-			task.wait(0.5) -- wait while camera is actively being forced
-			
-			if forceLookConn then
-				forceLookConn:Disconnect()
+			if cam then
+				cam.CFrame = CFrame.new(above, targetPart.Position)
 			end
 	
-			-- Try multiple times until prompt disappears
+			-- Try until collected
 			local success = false
-			for i = 1, 12 do
-				if not prompt:IsDescendantOf(game) or not prompt.Enabled then
+			for i = 1, 10 do
+				if not prompt:IsDescendantOf(game) then
 					success = true
 					break
 				end
 				pcall(function()
 					fireproximityprompt(prompt)
 				end)
-				task.wait(0.35)
+				task.wait(0.3)
 			end
 	
 			if success then
 				collected += 1
 			else
 				skipped += 1
-				warn("❌ Failed to collect:", fruit.Name)
+				warn("⚠️ Failed to collect:", cropName, fruit.Name)
 			end
 		end
 	end
