@@ -68,25 +68,38 @@ end
 -- Check if tool should be sold
 local function isToolValid(tool)
 	local fruitName, variant, mutations = parseToolName(tool.Name)
-	if not fruitName then return false end
-	if not selectedFruits[fruitName] then return false end
-	if not selectedVariants[variant] then return false end
+	print(`[Debug] Tool: {tool.Name} | Parsed: Fruit = {fruitName}, Variant = {variant}, Mutations = {#mutations}`)
+
+	if not fruitName then
+		print("  ❌ Skipped: Not a recognized fruit.")
+		return false
+	end
+	if not selectedFruits[fruitName] then
+		print("  ❌ Skipped: Fruit not selected in UI.")
+		return false
+	end
+	if not selectedVariants[variant] then
+		print("  ❌ Skipped: Variant not selected.")
+		return false
+	end
 
 	for _, mutation in ipairs(mutations) do
 		if not selectedMutations[mutation] then
+			print("  ❌ Skipped: Has disallowed mutation", mutation)
 			return false
 		end
 	end
 
-	-- Check if unmutated tool is being rejected
 	if #mutations == 0 then
 		for m in pairs(selectedMutations) do
 			if selectedMutations[m] then
+				print("  ❌ Skipped: Lacks required mutation(s)")
 				return false
 			end
 		end
 	end
 
+	print("  ✅ Will be sold.")
 	return true
 end
 
@@ -98,7 +111,7 @@ end
 
 -- Get valid inventory items
 local function getInventoryItems()
-	print("Getting inventory")
+	print("📦 Getting inventory...")
 	local backpack = LocalPlayer:WaitForChild("Backpack")
 	local items = {}
 
@@ -108,12 +121,13 @@ local function getInventoryItems()
 		end
 	end
 
+	print(`✅ Valid items to sell: {#items}`)
 	return items
 end
 
 -- Sell filtered tools
 local function sellItems(items)
-	print("Selling items...")
+	print("💰 Selling items...")
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 	local originalPos = root.Position
@@ -122,6 +136,7 @@ local function sellItems(items)
 	task.wait(RETURN_DELAY)
 
 	for _, tool in ipairs(items) do
+		print(" ➤ Selling:", tool.Name)
 		SellEvent:FireServer(tool)
 		task.wait(0.15)
 	end
@@ -144,6 +159,7 @@ local function sellFullInventory()
 
 	teleportTo(originalPos)
 end
+
 
 -- UI Setup
 return function(tab)
