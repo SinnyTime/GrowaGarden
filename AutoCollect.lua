@@ -34,8 +34,8 @@ end
 local function collectFruits()
 	for _, farm in pairs(Workspace:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
-			local ownerVa = farm:FindFirstChild("Owner")
-			if ownerVa and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
+			local ownerVal = farm:FindFirstChild("Owner")
+			if ownerVal and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
 				local plants = farm:FindFirstChild("Plants_Physical")
 				if plants then
 					for _, crop in pairs(plants:GetChildren()) do
@@ -125,7 +125,7 @@ return function(tab)
 	createLabel(tab, "Select Crops:")
 	for _, crop in ipairs(crops) do
 		selectedCrops[crop] = false
-		createCheckbo(tab, crop, function(state)
+		createCheckbox(tab, crop, function(state)
 			selectedCrops[crop] = state
 		end)
 	end
