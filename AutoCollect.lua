@@ -10,7 +10,6 @@ local function import(name)
 	return module()
 end
 
-local UIBuilder = import("UIBuilder")
 local ItemData = import("ItemData")
 
 local crops = ItemData.Items.Fruits
@@ -35,7 +34,7 @@ end
 local function collectFruits()
 	for _, farm in pairs(Workspace:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
-			local ownerVal = farm:FindFirstChild("Owner")
+			local ownerVa = farm:FindFirstChild("Owner")
 			if ownerVal and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
 				local plants = farm:FindFirstChild("Plants_Physical")
 				if plants then
@@ -59,31 +58,93 @@ local function collectFruits()
 	end
 end
 
--- 📋 UI Tab Constructor
+-- 🧱 Inline UI Creation (no UIBuilder dependency)
+local function createLabel(parent text)
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 0, 30)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = Color3.new(1,1,1)
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 16
+	label.TextWrapped = true
+	label.Parent = parent
+	return label
+end
+
+local function createCheckbox(parent, labelText, callback)
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, 0, 0, 30)
+	container.BackgroundTransparency = 1
+	container.Parent = parent
+
+	local box = Instance.new("TextButton")
+	box.Size = UDim2.new(0, 30, 1, 0)
+	box.Text = "☐"
+	box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	box.TextColor3 = Color3.new(1, 1, 1)
+	box.Font = Enum.Font.Gotham
+	box.TextSize = 16
+	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
+	box.Parent = container
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -40, 1, 0)
+	label.Position = UDim2.new(0, 40, 0, 0)
+	label.Text = labelText
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 15
+	label.BackgroundTransparency = 1
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = container
+
+	local checked = false
+	box.MouseButton1Click:Connect(function()
+		checked = not checked
+		box.Text = checked and "☑" or "☐"
+		callback(checked)
+	end)
+end
+
+local function createButton(parent, labelText, onClick)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0, 160, 0, 36)
+	btn.Text = labelText
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	btn.Parent = parent
+	btn.MouseButton1Click:Connect(onClick)
+end
+
+-- 📋 Tab Constructor
 return function(tab)
-	UIBuilder.CreateLabel(tab, "Select Crops:")
+	createLabel(tab, "Select Crops:")
 	for _, crop in ipairs(crops) do
 		selectedCrops[crop] = false
-		UIBuilder.CreateCheckbox(tab, crop, function(state)
+		createCheckbo(tab, crop, function(state)
 			selectedCrops[crop] = state
 		end)
 	end
 
-	UIBuilder.CreateLabel(tab, "Select Variants:")
+	createLabel(tab, "Select Variants:")
 	for _, variant in ipairs(variants) do
 		selectedVariants[variant] = false
-		UIBuilder.CreateCheckbox(tab, variant, function(state)
+		createCheckbox(tab, variant, function(state)
 			selectedVariants[variant] = state
 		end)
 	end
 
-	UIBuilder.CreateLabel(tab, "Select Particles:")
+	createLabel(tab, "Select Particles:")
 	for _, particle in ipairs(particles) do
 		selectedParticles[particle] = false
-		UIBuilder.CreateCheckbox(tab, particle, function(state)
+		createCheckbox(tab, particle, function(state)
 			selectedParticles[particle] = state
 		end)
 	end
 
-	UIBuilder.CreateButton(tab, "Collect Now", collectFruits)
+	createButton(tab, "Collect Now", collectFruits)
 end
