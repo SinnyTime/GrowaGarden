@@ -114,7 +114,9 @@ local function collectFruits()
 		if not selectedCrops[cropName] then continue end
 
 		for _, fruit in ipairs(getFruitParts(crop)) do
-			local variant = tostring(fruit:GetAttribute("Variant")) or "Normal"
+			local variantObj = fruit:FindFirstChild("Variant")
+			local variant = (variantObj and typeof(variantObj.Value) == "string" and variantObj.Value) or "Normal"
+
 			if not (variant == "Normal" or variant == "Gold" or variant == "Rainbow") then
 				variant = "Normal"
 			end
