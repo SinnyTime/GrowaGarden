@@ -142,14 +142,14 @@ tabContentFrames["Auto Buy"] = autoBuyFrame
 tabContentFrames["Pets"] = createTabContent()
 tabContentFrames["Teleports"] = createTabContent()
 
-showTab("Stock")
-
 	-- Tab switching logic
 local function showTab(name)
 	for tabName, frame in pairs(tabContentFrames) do
 		frame.Visible = (tabName == name)
 	end
 end
+
+showTab("Stock")
 
 stockTabBtn.MouseButton1Click:Connect(function() showTab("Stock") end)
 collectTabBtn.MouseButton1Click:Connect(function() showTab("Auto Collect") end)
