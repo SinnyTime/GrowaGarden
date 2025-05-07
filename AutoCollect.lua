@@ -12,68 +12,35 @@ local function import(name)
 end
 
 local ItemData = import("ItemData")
-
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
 
-local selectedCrops = {}
-local selectedVariants = {}
+local selectedCrops, selectedVariants = {}, {}
 
-local function getFruitParts(crop)
-	local parts = {}
-	if crop:FindFirstChild("Fruits") then
-		for _, fruit in ipairs(crop.Fruits:GetChildren()) do
-			if fruit:IsA("Model") or fruit:IsA("Part") then
-				table.insert(parts, fruit)
-			end
-		end
-	else
-		for _, child in ipairs(crop:GetChildren()) do
-			if tonumber(child.Name) and (child:IsA("Model") or child:IsA("Part")) then
-				table.insert(parts, child)
-			end
-		end
-	end
-	return parts
-end
-
--- Fly/noclip helpers
+-- Flying and noclip utils
 local function enableFly()
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
-
 	local bp = Instance.new("BodyPosition")
 	bp.Name = "FlyBP"
 	bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
 	bp.Position = root.Position
 	bp.Parent = root
-
 	LocalPlayer.Character:SetAttribute("NoclipActive", true)
 	RunService.Stepped:Connect(function()
 		if LocalPlayer.Character:GetAttribute("NoclipActive") then
 			for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = false
-				end
+				if part:IsA("BasePart") then part.CanCollide = false end
 			end
 		end
 	end)
 end
 
-local function updateFly(pos)
+local function moveTo(pos)
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 	local bp = root:FindFirstChild("FlyBP")
 	if bp then bp.Position = pos + Vector3.new(0, 5, 0) end
-end
-
-local function disableNoclip()
-	LocalPlayer.Character:SetAttribute("NoclipActive", false)
-	for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.CanCollide = true
-		end
-	end
 end
 
 local function disableFly()
@@ -81,108 +48,119 @@ local function disableFly()
 	if not root then return end
 	local bp = root:FindFirstChild("FlyBP")
 	if bp then bp:Destroy() end
+	LocalPlayer.Character:SetAttribute("NoclipActive", false)
+	for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+		if part:IsA("BasePart") then part.CanCollide = true end
+	end
 end
 
-local function lookAt(part)
+local function lookAt(target)
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-	local eye = root.Position + Vector3.new(0, 1.5, 0)
-	root.CFrame = CFrame.lookAt(eye, part.Position)
-	Workspace.CurrentCamera.CFrame = CFrame.new(Workspace.CurrentCamera.CFrame.Position, part.Position)
+	if root then
+		root.CFrame = CFrame.lookAt(root.Position, target.Position)
+		Workspace.CurrentCamera.CFrame = CFrame.new(Workspace.CurrentCamera.CFrame.Position, target.Position)
+	end
 end
 
--- ✅ Final collection logic
-local function collectFruits()
-	print("🌾 Beginning fruit collection...")
-	local collected, skipped = 0, 0
-
-	local root = Workspace:FindFirstChild("Farm")
-	if not root then warn("❌ No 'Farm' folder found in Workspace.") return end
-
-	local playerFarm
-	for _, farm in ipairs(root:GetChildren()) do
-		if farm:IsA("Folder") and farm.Name == "Farm" then
-			local owner = farm:FindFirstChild("Important")
-				and farm.Important:FindFirstChild("Data")
-				and farm.Important.Data:FindFirstChild("Owner")
-			if owner and owner:IsA("StringValue") and owner.Value == LocalPlayer.Name then
-				playerFarm = farm
-				break
+local function getFruitParts(crop)
+	local fruits = {}
+	if crop:FindFirstChild("Fruits") then
+		for _, fruit in ipairs(crop.Fruits:GetChildren()) do
+			if fruit:IsA("Model") or fruit:IsA("Part") then
+				table.insert(fruits, fruit)
+			end
+		end
+	else
+		for _, obj in ipairs(crop:GetChildren()) do
+			if tonumber(obj.Name) and (obj:IsA("Model") or obj:IsA("Part")) then
+				table.insert(fruits, obj)
 			end
 		end
 	end
+	return fruits
+end
 
-	if not playerFarm then warn("❌ Could not find your farm.") return end
+-- 🍓 Main Collection Logic
+local function collectFruits()
+	print("🌿 Starting collection...")
+	local collected, skipped = 0, 0
+
+	local root = Workspace:FindFirstChild("Farm")
+	if not root then return warn("❌ No 'Farm' found.") end
+
+	local playerFarm
+	for _, farm in ipairs(root:GetChildren()) do
+		local owner = farm:FindFirstChild("Important")
+			and farm.Important:FindFirstChild("Data")
+			and farm.Important.Data:FindFirstChild("Owner")
+		if owner and owner:IsA("StringValue") and owner.Value == LocalPlayer.Name then
+			playerFarm = farm
+			break
+		end
+	end
+	if not playerFarm then return warn("❌ Your farm wasn't found.") end
 
 	local plants = playerFarm.Important:FindFirstChild("Plants_Physical")
-	if not plants then warn("❌ No 'Plants_Physical' found.") return end
+	if not plants then return warn("❌ No Plants_Physical folder found.") end
 
-	local returnPos = playerFarm:FindFirstChild("Sign") and playerFarm.Sign:FindFirstChild("Core_Part") and playerFarm.Sign.Core_Part.Position + Vector3.new(0, 10, 0)
+	local returnPos = playerFarm:FindFirstChild("Sign") and playerFarm.Sign:FindFirstChild("Core_Part") and playerFarm.Sign.Core_Part.Position
 
 	enableFly()
 
 	for _, crop in ipairs(plants:GetChildren()) do
+		local cropName = crop.Name
+		if not selectedCrops[cropName] then continue end
+
 		for _, fruit in ipairs(getFruitParts(crop)) do
-			if not (fruit:IsA("Model") or fruit:IsA("Part")) then continue end
-
-			local cropName = crop.Name
-			if not selectedCrops[cropName] then continue end
-
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			if not selectedVariants[variant] then continue end
 
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
-			local part = fruit:FindFirstChildWhichIsA("BasePart", true)
+			local targetPart = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
+			if not (prompt and targetPart) then skipped += 1 continue end
 
-			if prompt and part then
-				prompt.MaxActivationDistance = 9999
-				prompt.RequiresLineOfSight = false
-				prompt.HoldDuration = 0
+			prompt.MaxActivationDistance = 9999
+			prompt.RequiresLineOfSight = false
+			prompt.HoldDuration = 0
 
-				updateFly(part.Position)
-				task.wait(0.4)
-				lookAt(part)
-				task.wait(0.4)
+			moveTo(targetPart.Position)
+			task.wait(0.4)
+			lookAt(targetPart)
+			task.wait(0.3)
 
-				local success = pcall(function()
-					fireproximityprompt(prompt)
-				end)
+			local success = pcall(function()
+				fireproximityprompt(prompt)
+			end)
 
-				if success then
-					collected += 1
-				else
-					skipped += 1
-				end
-
-				task.wait(0.3)
+			if success then
+				collected += 1
 			else
 				skipped += 1
 			end
+
+			task.wait(0.3)
 		end
 	end
 
 	if returnPos then
-		updateFly(returnPos)
-		task.wait(0.6)
+		moveTo(returnPos + Vector3.new(0, 10, 0))
+		task.wait(0.5)
 	end
 
-	disableNoclip()
-	task.wait(0.2)
 	disableFly()
-
-	print(`✅ Collection complete. Collected: {collected}, Skipped: {skipped}`)
+	print(`✅ Done. Collected: {collected}, Skipped: {skipped}`)
 end
 
--- UI builder (unchanged)
+-- 🌾 UI Setup
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Font = Enum.Font.GothamBold
 	label.TextSize = 16
-	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.BackgroundTransparency = 1
+	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.Parent = parent
 end
 
@@ -210,7 +188,6 @@ local function createCheckbox(parent, labelText, callback)
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.BackgroundTransparency = 1
 	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Parent = container
 
 	local checked = false
 	box.MouseButton1Click:Connect(function()
@@ -220,11 +197,10 @@ local function createCheckbox(parent, labelText, callback)
 	end)
 end
 
--- 🔘 Hook it into the tab
+-- 🧩 Hook into tab
 return function(tab)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(1, 0, 1, -50)
-	scroll.Position = UDim2.new(0, 0, 0, 0)
 	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 	scroll.ScrollBarThickness = 6
 	scroll.BackgroundTransparency = 1
