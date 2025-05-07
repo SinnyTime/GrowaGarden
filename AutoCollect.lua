@@ -64,13 +64,21 @@ local function getReasonSkipped(fruit)
 end
 
 local function getFruitParts(crop)
-	local found = {}
-	for _, descendant in ipairs(crop:GetDescendants()) do
-		if descendant:IsA("Model") or descendant:IsA("Part") then
-			table.insert(found, descendant)
+	local parts = {}
+	if crop:FindFirstChild("Fruits") then
+		for _, fruit in ipairs(crop.Fruits:GetChildren()) do
+			if fruit:IsA("Model") or fruit:IsA("Part") then
+				table.insert(parts, fruit)
+			end
+		end
+	else
+		for _, child in ipairs(crop:GetChildren()) do
+			if tonumber(child.Name) and (child:IsA("Model") or child:IsA("Part")) then
+				table.insert(parts, child)
+			end
 		end
 	end
-	return found
+	return parts
 end
 
 local function collectFruits()
