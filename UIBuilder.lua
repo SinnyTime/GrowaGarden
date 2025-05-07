@@ -186,8 +186,8 @@ layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 layout.VerticalAlignment = Enum.VerticalAlignment.Top
 
 addPlaceholder(tabContentFrames["Pets"], "🐾 Pet system coming soon!")
-local sellTab = loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/SellTab.lua"))()
-sellTab.BuildUI(tabContentFrames["Auto Sell"])
+local sellTabFunc = loadstring(game:HttpGet("https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/SellTab.lua"))()
+sellTabFunc(tabContentFrames["Auto Sell"])
 	
 	local function createTeleportButton(labelText, position)
 		local btn = Instance.new("TextButton", tpFrame)
