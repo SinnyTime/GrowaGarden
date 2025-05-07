@@ -20,20 +20,29 @@ local selectedCrops = {}
 local selectedVariants = {}
 local selectedParticles = {}
 
+-- ✅ Check if fruit has all selected particles
 local function hasRequiredParticles(fruit)
 	for particle, enabled in pairs(selectedParticles) do
-		if enabled and not fruit:FindFirstChild(particle) then
-			return false
+		if enabled then
+			if not fruit:FindFirstChild(particle) then
+				print("[❌] Missing particle:", particle, "on fruit:", fruit.Name)
+				return false
+			else
+				print("[✅] Found particle:", particle, "on", fruit.Name)
+			end
 		end
 	end
 	return true
 end
 
+-- 🌾 Core Auto-Collect Logic
 local function collectFruits()
+	print("🌾 Beginning fruit collection...")
 	for _, farm in pairs(Workspace:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
 			local ownerVal = farm:FindFirstChild("Owner")
 			if ownerVal and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
+				print("🔍 Found your farm:", farm:GetFullName())
 				local plants = farm:FindFirstChild("Plants_Physical")
 				if plants then
 					for _, crop in pairs(plants:GetChildren()) do
@@ -41,19 +50,33 @@ local function collectFruits()
 						for _, fruit in pairs(fruitFolder:GetChildren()) do
 							local name = fruit.Name
 							local variant = fruit:GetAttribute("Variant") or "Normal"
-							if selectedCrops[name] and selectedVariants[variant] and hasRequiredParticles(fruit) then
+
+							local cropMatch = selectedCrops[name] == true
+							local variantMatch = selectedVariants[variant] == true
+							local particleMatch = hasRequiredParticles(fruit)
+
+							print(string.format("🔎 Checking %s (%s): Crop=%s, Variant=%s, Particles=%s",
+								name, variant, tostring(cropMatch), tostring(variantMatch), tostring(particleMatch)))
+
+							if cropMatch and variantMatch and particleMatch then
 								local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 								if prompt then
+									print("✨ Collecting:", fruit.Name)
 									fireproximityprompt(prompt)
-									task.wait(0.1)
+									task.wait(0.2)
+								else
+									warn("⚠️ No ProximityPrompt found on:", fruit:GetFullName())
 								end
 							end
 						end
 					end
+				else
+					warn("⚠️ No Plants_Physical found in farm:", farm.Name)
 				end
 			end
 		end
 	end
+	print("✅ Fruit collection complete.")
 end
 
 -- Create label header
@@ -104,6 +127,7 @@ local function createCheckbox(parent, labelText, callback)
 	end)
 end
 
+-- 📋 UI Constructor
 return function(tab)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(1, 0, 1, -50)
