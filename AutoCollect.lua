@@ -37,13 +37,16 @@ local function getFruitParts(crop)
 	return parts
 end
 
--- Fly & noclip control
+-- Fly/noclip helpers
 local function enableFly()
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
 	local bp = Instance.new("BodyPosition")
 	bp.Name = "FlyBP"
 	bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-	bp.Position = LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 10, 0)
-	bp.Parent = LocalPlayer.Character.HumanoidRootPart
+	bp.Position = root.Position
+	bp.Parent = root
 
 	LocalPlayer.Character:SetAttribute("NoclipActive", true)
 	RunService.Stepped:Connect(function()
@@ -58,10 +61,10 @@ local function enableFly()
 end
 
 local function updateFly(pos)
-	local bp = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FlyBP")
-	if bp then
-		bp.Position = pos + Vector3.new(0, 5, 0)
-	end
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local bp = root:FindFirstChild("FlyBP")
+	if bp then bp.Position = pos + Vector3.new(0, 5, 0) end
 end
 
 local function disableNoclip()
@@ -74,17 +77,21 @@ local function disableNoclip()
 end
 
 local function disableFly()
-	local bp = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FlyBP")
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local bp = root:FindFirstChild("FlyBP")
 	if bp then bp:Destroy() end
 end
 
 local function lookAt(part)
-	local root = LocalPlayer.Character.HumanoidRootPart
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
 	local eye = root.Position + Vector3.new(0, 1.5, 0)
 	root.CFrame = CFrame.lookAt(eye, part.Position)
 	Workspace.CurrentCamera.CFrame = CFrame.new(Workspace.CurrentCamera.CFrame.Position, part.Position)
 end
 
+-- ✅ Final collection logic
 local function collectFruits()
 	print("🌾 Beginning fruit collection...")
 	local collected, skipped = 0, 0
@@ -119,7 +126,6 @@ local function collectFruits()
 			if not (fruit:IsA("Model") or fruit:IsA("Part")) then continue end
 
 			local cropName = crop.Name
-			local name = crop:FindFirstChild("Fruits") and fruit.Name or cropName
 			if not selectedCrops[cropName] then continue end
 
 			local variant = fruit:GetAttribute("Variant") or "Normal"
@@ -145,7 +151,6 @@ local function collectFruits()
 				if success then
 					collected += 1
 				else
-					warn("⚠️ Failed to collect", name)
 					skipped += 1
 				end
 
@@ -165,10 +170,10 @@ local function collectFruits()
 	task.wait(0.2)
 	disableFly()
 
-	print(`✅ Fruit collection complete. Collected: {collected}, Skipped: {skipped}`)
+	print(`✅ Collection complete. Collected: {collected}, Skipped: {skipped}`)
 end
 
--- UI setup
+-- UI builder (unchanged)
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
@@ -215,6 +220,7 @@ local function createCheckbox(parent, labelText, callback)
 	end)
 end
 
+-- 🔘 Hook it into the tab
 return function(tab)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(1, 0, 1, -50)
