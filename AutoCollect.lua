@@ -107,40 +107,53 @@ local function collectFruits()
 
 	enableFly()
 
+	-- Inside the collectFruits loop, replace the individual collection logic with this:
+
 	for _, crop in ipairs(plants:GetChildren()) do
 		local cropName = crop.Name
 		if not selectedCrops[cropName] then continue end
-
+	
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			if not selectedVariants[variant] then continue end
-
+	
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 			local targetPart = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
 			if not (prompt and targetPart) then skipped += 1 continue end
-
-			prompt.MaxActivationDistance = 9999
-			prompt.RequiresLineOfSight = false
-			prompt.HoldDuration = 0
-
-			moveTo(targetPart.Position)
+	
+			-- Adjust positioning
+			local above = targetPart.Position + Vector3.new(0, 6, 0)
+			moveTo(above)
 			task.wait(0.4)
-			lookAt(targetPart)
-			task.wait(0.3)
-
-			local success = pcall(function()
-				fireproximityprompt(prompt)
-			end)
-
+	
+			-- Look straight down
+			local cam = Workspace.CurrentCamera
+			if cam then
+				cam.CFrame = CFrame.new(above, targetPart.Position)
+			end
+	
+			-- Try until collected
+			local success = false
+			for i = 1, 10 do
+				if not prompt:IsDescendantOf(game) then
+					success = true
+					break
+				end
+				pcall(function()
+					fireproximityprompt(prompt)
+				end)
+				task.wait(0.3)
+			end
+	
 			if success then
 				collected += 1
 			else
 				skipped += 1
+				warn("⚠️ Failed to collect:", cropName, fruit.Name)
 			end
-
-			task.wait(0.3)
 		end
 	end
+
 
 	if returnPos then
 		moveTo(returnPos + Vector3.new(0, 10, 0))
