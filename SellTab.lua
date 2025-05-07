@@ -72,35 +72,36 @@ local function isToolValid(tool)
 	print(`[Debug] Tool: {tool.Name} | Parsed: Fruit = {fruitName}, Variant = {variant}, Mutations = {#mutations}`)
 
 	if not fruitName then
-		print("  ❌ Skipped: Not a recognized fruit.")
+		print("❌ Skipped: Not a recognized fruit.")
 		return false
 	end
 	if not selectedFruits[fruitName] then
-		print("  ❌ Skipped: Fruit not selected in UI.")
+		print("❌ Skipped: Fruit not selected in UI.")
 		return false
 	end
 	if not selectedVariants[variant] then
-		print("  ❌ Skipped: Variant not selected.")
+		print("❌ Skipped: Variant not selected.")
 		return false
 	end
 
-	for _, mutation in ipairs(mutations) do
-		if not selectedMutations[mutation] then
-			print("  ❌ Skipped: Has disallowed mutation", mutation)
-			return false
+	-- If user selected at least one mutation, enforce that all mutations must be selected
+	local mutationFiltersActive = false
+	for _, v in pairs(selectedMutations) do
+		if v then
+			mutationFiltersActive = true
+			break
 		end
 	end
 
-	if #mutations == 0 then
-		for m in pairs(selectedMutations) do
-			if selectedMutations[m] then
-				print("  ❌ Skipped: Lacks required mutation(s)")
+	if mutationFiltersActive then
+		for _, mutation in ipairs(mutations) do
+			if not selectedMutations[mutation] then
+				print("❌ Skipped: Has disallowed mutation", tool.Name)
 				return false
 			end
 		end
 	end
 
-	print("  ✅ Will be sold.")
 	return true
 end
 
