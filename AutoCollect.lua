@@ -122,6 +122,11 @@ end
 
 -- 📋 Tab Constructor
 return function(tab)
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 6)
+	layout.Parent = tab
+
 	createLabel(tab, "Select Crops:")
 	for _, crop in ipairs(crops) do
 		selectedCrops[crop] = false
