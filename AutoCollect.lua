@@ -59,7 +59,7 @@ local function collectFruits()
 end
 
 -- 🧱 Inline UI Creation (no UIBuilder dependency)
-local function createLabel(parent text)
+local function createLabel(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 30)
 	label.BackgroundTransparency = 1
