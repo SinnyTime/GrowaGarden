@@ -77,7 +77,7 @@ local function sellItems(items)
 	task.wait(RETURN_DELAY)
 
 	for _, tool in ipairs(items) do
-		SellEvent:FireServer(tool)
+		SellEvent:FireServer(tool.Name)
 		task.wait(0.1)
 	end
 
