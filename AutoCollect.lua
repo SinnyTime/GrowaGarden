@@ -38,11 +38,14 @@ end
 -- 🌾 Core Auto-Collect Logic
 local function collectFruits()
 	print("🌾 Beginning fruit collection...")
+
+	local collected = 0
+	local skipped = 0
+
 	for _, farm in pairs(Workspace:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
 			local ownerVal = farm:FindFirstChild("Owner")
 			if ownerVal and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
-				print("🔍 Found your farm:", farm:GetFullName())
 				local plants = farm:FindFirstChild("Plants_Physical")
 				if plants then
 					for _, crop in pairs(plants:GetChildren()) do
@@ -50,33 +53,43 @@ local function collectFruits()
 						for _, fruit in pairs(fruitFolder:GetChildren()) do
 							local name = fruit.Name
 							local variant = fruit:GetAttribute("Variant") or "Normal"
+							local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 
-							local cropMatch = selectedCrops[name] == true
-							local variantMatch = selectedVariants[variant] == true
-							local particleMatch = hasRequiredParticles(fruit)
+							if not selectedCrops[name] then
+								skipped += 1
+								print(`⚪ Skipped "{name}" (not selected)`)
+								continue
+							end
 
-							print(string.format("🔎 Checking %s (%s): Crop=%s, Variant=%s, Particles=%s",
-								name, variant, tostring(cropMatch), tostring(variantMatch), tostring(particleMatch)))
+							if not selectedVariants[variant] then
+								skipped += 1
+								print(`⚪ Skipped "{name}" (variant: {variant} not selected)`)
+								continue
+							end
 
-							if cropMatch and variantMatch and particleMatch then
-								local prompt = fruit:FindFirstDescendantWhichIsA("ProximityPrompt")
-								if prompt then
-									print("✨ Collecting:", fruit.Name)
-									fireproximityprompt(prompt)
-									task.wait(0.2)
-								else
-									warn("⚠️ No ProximityPrompt found on:", fruit:GetFullName())
-								end
+							if not hasRequiredParticles(fruit) then
+								skipped += 1
+								print(`⚪ Skipped "{name}" (missing required particles)`)
+								continue
+							end
+
+							if prompt then
+								fireproximityprompt(prompt)
+								print(`✅ Collected: {name} (variant: {variant})`)
+								collected += 1
+								task.wait(0.1)
+							else
+								skipped += 1
+								print(`⚠️ No ProximityPrompt found in: {name}`)
 							end
 						end
 					end
-				else
-					warn("⚠️ No Plants_Physical found in farm:", farm.Name)
 				end
 			end
 		end
 	end
-	print("✅ Fruit collection complete.")
+
+	print(`✔️ Fruit collection complete. Collected: {collected}, Skipped: {skipped}`)
 end
 
 -- Create label header
