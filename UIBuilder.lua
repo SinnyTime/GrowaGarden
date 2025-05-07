@@ -100,9 +100,10 @@ end
 local stockTabBtn = createTab("Stock")
 local collectTabBtn = createTab("Auto Collect")
 local sellTabBtn = createTab("Auto Sell")
-local autoTabBtn = createTab("AutoBuy")
+local autoTabBtn = createTab("Auto Buy")
 local petsTabBtn = createTab("Pets")
 local tpTabBtn = createTab("Teleports")
+
 
 	local tabContentFrames = {}
 
@@ -137,11 +138,11 @@ Instance.new("UICorner", footer).CornerRadius = UDim.new(0, 8)
 tabContentFrames["Stock"] = createTabContent()
 tabContentFrames["Auto Collect"] = createTabContent()
 tabContentFrames["Auto Sell"] = createTabContent()
-tabContentFrames["AutoBuy"] = createTabContent()
+tabContentFrames["Auto Buy"] = autoBuyFrame
 tabContentFrames["Pets"] = createTabContent()
 tabContentFrames["Teleports"] = createTabContent()
 
-autoBuyFrame.Visible = true
+showTab("Stock")
 
 	-- Tab switching logic
 local function showTab(name)
@@ -153,7 +154,7 @@ end
 stockTabBtn.MouseButton1Click:Connect(function() showTab("Stock") end)
 collectTabBtn.MouseButton1Click:Connect(function() showTab("Auto Collect") end)
 sellTabBtn.MouseButton1Click:Connect(function() showTab("Auto Sell") end)
-autoTabBtn.MouseButton1Click:Connect(function() showTab("AutoBuy") end)
+autoTabBtn.MouseButton1Click:Connect(function() showTab("Auto Buy") end)
 petsTabBtn.MouseButton1Click:Connect(function() showTab("Pets") end)
 tpTabBtn.MouseButton1Click:Connect(function() showTab("Teleports") end)
 
