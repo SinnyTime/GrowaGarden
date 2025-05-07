@@ -76,7 +76,9 @@ local function collectFruits()
 		return
 	end
 
-	local plants = playerFarm:FindFirstChild("Plants_Physical")
+	local important = playerFarm:FindFirstChild("Important")
+	local plants = important and important:FindFirstChild("Plants_Physical")
+
 	if not plants then
 		warn("❌ No 'Plants_Physical' folder found in your farm.")
 		return
