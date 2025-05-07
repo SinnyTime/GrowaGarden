@@ -44,6 +44,13 @@ local function enableFly()
 	local root = char and char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.PlatformStand = true
+		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+	end
+
 	flyingBP = Instance.new("BodyPosition")
 	flyingBP.Name = "FlyBP"
 	flyingBP.MaxForce = Vector3.new(1e9, 1e9, 1e9)
@@ -81,15 +88,29 @@ local function moveTo(pos)
 end
 
 local function disableFly()
-	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	local char = LocalPlayer.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+
 	if root then
 		if flyingBP then flyingBP:Destroy() flyingBP = nil end
 		if flyingGyro then flyingGyro:Destroy() flyingGyro = nil end
 	end
+
 	if noclipConn then noclipConn:Disconnect() noclipConn = nil end
+
 	LocalPlayer.Character:SetAttribute("NoclipActive", false)
-	for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-		if part:IsA("BasePart") then part.CanCollide = true end
+
+	if hum then
+		hum.PlatformStand = false
+		hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+		hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+	end
+
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = true
+		end
 	end
 end
 
