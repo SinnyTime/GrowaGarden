@@ -21,7 +21,7 @@ local mutationMap = {
 	ChilledParticle = "Chilled",
 	ShockedParticle = "Shocked"
 }
-local particles = {} -- raw keys for filtering
+local particles = {}
 for particle in pairs(mutationMap) do table.insert(particles, particle) end
 
 local selectedCrops = {}
@@ -30,13 +30,8 @@ local selectedParticles = {}
 
 local function hasRequiredParticles(fruit)
 	for particle, enabled in pairs(selectedParticles) do
-		if enabled then
-			if not fruit:FindFirstChild(particle) then
-				print("❌ Missing:", mutationMap[particle], "on", fruit.Name)
-				return false
-			else
-				print("✅ Found:", mutationMap[particle], "on", fruit.Name)
-			end
+		if enabled and not fruit:FindFirstChild(particle) then
+			return false
 		end
 	end
 	return true
@@ -52,21 +47,17 @@ local function collectFruits()
 		return
 	end
 
-	local playerFarm = nil
+	local playerFarm
 	for _, farm in ipairs(root:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
 			local owner = farm:FindFirstChild("Important")
 				and farm.Important:FindFirstChild("Data")
 				and farm.Important.Data:FindFirstChild("Owner")
 			if owner and owner:IsA("StringValue") then
-				print("🔎 Found owner value:", owner.Value)
 				if owner.Value == LocalPlayer.Name then
 					playerFarm = farm
-					print("✅ Matched player farm!")
 					break
 				end
-			else
-				print("❌ No valid Owner value in", farm:GetFullName())
 			end
 		end
 	end
@@ -76,9 +67,7 @@ local function collectFruits()
 		return
 	end
 
-	local important = playerFarm:FindFirstChild("Important")
-	local plants = important and important:FindFirstChild("Plants_Physical")
-
+	local plants = playerFarm:FindFirstChild("Important") and playerFarm.Important:FindFirstChild("Plants_Physical")
 	if not plants then
 		warn("❌ No 'Plants_Physical' folder found in your farm.")
 		return
@@ -87,44 +76,32 @@ local function collectFruits()
 	for _, crop in ipairs(plants:GetChildren()) do
 		local fruitFolder = crop:FindFirstChild("Fruits") or crop
 		for _, fruit in ipairs(fruitFolder:GetChildren()) do
+			if not (fruit:IsA("Model") or fruit:IsA("Part")) then continue end
+			if not table.find(crops, fruit.Name) then continue end
+
 			local name = fruit.Name
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 
-			if not selectedCrops[name] then
-				skipped += 1
-				print("⚪ Skipped", name, "(crop not selected)")
-				continue
-			end
-
-			if not selectedVariants[variant] then
-				skipped += 1
-				print("⚪ Skipped", name, "(variant not selected:", variant .. ")")
-				continue
-			end
-
-			if not hasRequiredParticles(fruit) then
-				skipped += 1
-				print("⚪ Skipped", name, "(missing required mutations)")
-				continue
-			end
+			if not selectedCrops[name] then skipped += 1 continue end
+			if not selectedVariants[variant] then skipped += 1 continue end
+			if not hasRequiredParticles(fruit) then skipped += 1 continue end
 
 			if prompt then
 				fireproximityprompt(prompt)
 				collected += 1
-				print("✅ Collected:", name, "(variant:", variant .. ")")
 				task.wait(0.1)
 			else
 				skipped += 1
-				print("⚠️ No prompt found on:", name)
 			end
 		end
 	end
 
+	if collected == 0 then warn("⚠️ No fruits were collected. Double-check your filters!") end
 	print(`✅ Fruit collection complete. Collected: {collected}, Skipped: {skipped}`)
 end
 
--- UI Helpers
+-- UI creation
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
