@@ -116,7 +116,6 @@ local function createTabContent()
 end
 
 local autoBuyFrame = createTabContent()
-autoBuyFrame.Visible = true
 	
 -- 🟢 SCROLL first
 local scroll = Instance.new("ScrollingFrame", autoBuyFrame)
@@ -141,6 +140,8 @@ tabContentFrames["Auto Sell"] = createTabContent()
 tabContentFrames["AutoBuy"] = createTabContent()
 tabContentFrames["Pets"] = createTabContent()
 tabContentFrames["Teleports"] = createTabContent()
+
+autoBuyFrame.Visible = true
 
 	-- Tab switching logic
 local function showTab(name)
