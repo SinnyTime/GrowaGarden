@@ -147,7 +147,12 @@ local function collectFruits()
 			-- Look down *after* reaching the hover point
 			local cam = Workspace.CurrentCamera
 			if cam then
-				cam.CFrame = CFrame.new(cam.CFrame.Position, targetPart.Position)
+				task.spawn(function()
+					for i = 1, 10 do
+						cam.CFrame = CFrame.lookAt(cam.CFrame.Position, targetPart.Position)
+						task.wait(0.05)
+					end
+				end)
 			end
 	
 			task.wait(0.2)
