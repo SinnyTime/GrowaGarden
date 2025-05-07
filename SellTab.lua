@@ -36,13 +36,15 @@ local mutationMap = {
 local selectedFruits = {}
 local selectedVariants = {}
 local selectedMutations = {}
+local allFruits = false
+local allVariants = false
+local allMutations = false
 
 -- Parse tool name
 local function parseToolName(toolName)
 	local mutations = {}
 	local fruitNameFound = nil
 
-	-- Identify fruit name
 	for _, fruit in ipairs(fruits) do
 		local startIdx = toolName:find(fruit)
 		if startIdx then
@@ -50,13 +52,10 @@ local function parseToolName(toolName)
 			break
 		end
 	end
-	if not fruitNameFound then
-		return nil, "Normal", {}
-	end
+	if not fruitNameFound then return nil, "Normal", {} end
 
 	local prefix = toolName:split(fruitNameFound)[1]
 
-	-- Determine variant
 	local variant = "Normal"
 	if prefix:find("Gold") then
 		variant = "Gold"
@@ -64,7 +63,6 @@ local function parseToolName(toolName)
 		variant = "Rainbow"
 	end
 
-	-- Grab valid mutations (excluding Gold/Rainbow)
 	for mutation in pairs(mutationMap) do
 		if prefix:find("%[" .. mutation .. "%]") then
 			table.insert(mutations, mutation)
@@ -83,16 +81,15 @@ local function isToolValid(tool)
 		print("❌ Skipped: Not a recognized fruit.")
 		return false
 	end
-	if not selectedFruits[fruitName] then
+	if not allFruits and not selectedFruits[fruitName] then
 		print("❌ Skipped: Fruit not selected in UI.")
 		return false
 	end
-	if not selectedVariants[variant] then
+	if not allVariants and not selectedVariants[variant] then
 		print("❌ Skipped: Variant not selected.")
 		return false
 	end
 
-	-- If user selected at least one mutation, enforce that all mutations must be selected
 	local mutationFiltersActive = false
 	for _, v in pairs(selectedMutations) do
 		if v then
@@ -101,13 +98,18 @@ local function isToolValid(tool)
 		end
 	end
 
-	if mutationFiltersActive then
+	if mutationFiltersActive and not allMutations then
 		for _, mutation in ipairs(mutations) do
 			if not selectedMutations[mutation] then
 				print("❌ Skipped: Has disallowed mutation", tool.Name)
 				return false
 			end
 		end
+	end
+
+	if not mutationFiltersActive and not allMutations and #mutations > 0 then
+		print("❌ Skipped: Mutated item but no mutations allowed.")
+		return false
 	end
 
 	return true
@@ -151,7 +153,6 @@ local function sellItems(items)
 		print(" ➤ Equipping:", tool.Name)
 		humanoid:EquipTool(tool)
 		task.wait(0.2)
-
 		print("    🔥 Firing sell event:", tool.Name)
 		SellEvent:FireServer(tool)
 		task.wait(0.2)
@@ -175,7 +176,6 @@ local function sellFullInventory()
 
 	teleportTo(originalPos)
 end
-
 
 -- UI Setup
 return function(tab)
@@ -241,6 +241,7 @@ return function(tab)
 
 	-- Fruits
 	createHeader("🍓 Select Fruits")
+	createCheckbox("✅ All Fruits", function(state) allFruits = state end)
 	for _, fruit in ipairs(fruits) do
 		selectedFruits[fruit] = false
 		createCheckbox(fruit, function(state)
@@ -250,6 +251,7 @@ return function(tab)
 
 	-- Variants
 	createHeader("🌈 Select Variants")
+	createCheckbox("✅ All Variants", function(state) allVariants = state end)
 	for _, variant in ipairs(variants) do
 		selectedVariants[variant] = false
 		createCheckbox(variant, function(state)
@@ -259,6 +261,7 @@ return function(tab)
 
 	-- Mutations
 	createHeader("🧬 Require Mutations")
+	createCheckbox("✅ All Mutations", function(state) allMutations = state end)
 	for mutation in pairs(mutationMap) do
 		selectedMutations[mutation] = false
 		createCheckbox(mutation, function(state)
