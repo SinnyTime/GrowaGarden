@@ -37,6 +37,22 @@ local function hasRequiredParticles(fruit)
 	return true
 end
 
+local function getReasonSkipped(fruit)
+	if not selectedCrops[fruit.Name] then
+		return "❌ Crop not selected: " .. fruit.Name
+	end
+	local variant = fruit:GetAttribute("Variant") or "Normal"
+	if not selectedVariants[variant] then
+		return "❌ Variant not selected: " .. variant
+	end
+	for particle, required in pairs(selectedParticles) do
+		if required and not fruit:FindFirstChild(particle) then
+			return "❌ Missing mutation: " .. mutationMap[particle]
+		end
+	end
+	return nil
+end
+
 local function collectFruits()
 	print("🌾 Beginning fruit collection...")
 	local collected, skipped = 0, 0
@@ -83,15 +99,19 @@ local function collectFruits()
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 
-			if not selectedCrops[name] then skipped += 1 continue end
-			if not selectedVariants[variant] then skipped += 1 continue end
-			if not hasRequiredParticles(fruit) then skipped += 1 continue end
+			local reason = getReasonSkipped(fruit)
+			if reason then
+				print("⏭️ Skipped:", name, "-", reason)
+				skipped += 1
+				continue
+			end
 
 			if prompt then
 				fireproximityprompt(prompt)
 				collected += 1
 				task.wait(0.1)
 			else
+				print("❌ No ProximityPrompt for", name)
 				skipped += 1
 			end
 		end
@@ -101,7 +121,6 @@ local function collectFruits()
 	print(`✅ Fruit collection complete. Collected: {collected}, Skipped: {skipped}`)
 end
 
--- UI creation
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
