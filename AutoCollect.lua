@@ -2,6 +2,9 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local SellAllEvent = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("Sell_Inventory")
 
 local BASE_URL = "https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/"
 local function import(name)
@@ -12,9 +15,11 @@ local function import(name)
 end
 
 local ItemData = import("ItemData")
-local crops = ItemData.Items.Fruits
-local variants = { "Normal", "Gold", "Rainbow" }
+local crops = {}
+for _, name in ipairs(ItemData.Items.Fruits) do table.insert(crops, name) end
+for _, name in ipairs(ItemData.Items.PremiumFruits) do table.insert(crops, name) end
 
+local variants = { "Normal", "Gold", "Rainbow" }
 local mutationMap = {
 	FrozenParticle = "Frozen",
 	WetParticle = "Wet",
@@ -24,6 +29,7 @@ local mutationMap = {
 
 local selectedCrops, selectedVariants, selectedMutations = {}, {}, {}
 local flyingBP, flyingGyro, noclipConn
+local autoSellEnabled = false
 
 local function enableFly()
 	local char = LocalPlayer.Character
@@ -81,15 +87,12 @@ end
 
 local function hasBadMutations(fruit)
 	local found = {}
-
-	-- Collect all mutation particles on this fruit
 	for _, descendant in ipairs(fruit:GetDescendants()) do
 		if mutationMap[descendant.Name] then
 			found[descendant.Name] = true
 		end
 	end
 
-	-- If user selected no mutations, the fruit must also have none
 	local userSelected = {}
 	for mutation, selected in pairs(selectedMutations) do
 		if selected then
@@ -98,22 +101,17 @@ local function hasBadMutations(fruit)
 	end
 
 	if next(userSelected) == nil then
-		return next(found) ~= nil -- has any mutation? disallowed.
+		return next(found) ~= nil
 	end
 
-	-- Compare found mutations to user selection
 	for mutation in pairs(userSelected) do
-		if not found[mutation] then
-			return true -- missing a required mutation
-		end
+		if not found[mutation] then return true end
 	end
 	for mutation in pairs(found) do
-		if not userSelected[mutation] then
-			return true -- has an extra mutation not allowed
-		end
+		if not userSelected[mutation] then return true end
 	end
 
-	return false -- everything matched exactly!
+	return false
 end
 
 local function getFruitParts(crop)
@@ -267,6 +265,11 @@ return function(tab)
 	end)
 
 	createHeader(scroll, "🌽 Select Crops")
+
+	createCheckbox(scroll, "✅ All Fruits", function(state)
+		for crop in pairs(selectedCrops) do selectedCrops[crop] = state end
+	end)
+
 	for _, crop in ipairs(crops) do
 		selectedCrops[crop] = false
 		createCheckbox(scroll, crop, function(state)
@@ -275,6 +278,11 @@ return function(tab)
 	end
 
 	createHeader(scroll, "✨ Select Variants")
+
+	createCheckbox(scroll, "✅ All Variants", function(state)
+		for variant in pairs(selectedVariants) do selectedVariants[variant] = state end
+	end)
+
 	for _, variant in ipairs(variants) do
 		selectedVariants[variant] = false
 		createCheckbox(scroll, variant, function(state)
@@ -283,6 +291,11 @@ return function(tab)
 	end
 
 	createHeader(scroll, "❄️ Select Mutations")
+
+	createCheckbox(scroll, "✅ All Mutations", function(state)
+		for mutation in pairs(selectedMutations) do selectedMutations[mutation] = state end
+	end)
+
 	for particleName, displayName in pairs(mutationMap) do
 		selectedMutations[particleName] = false
 		createCheckbox(scroll, displayName, function(state)
@@ -295,15 +308,40 @@ return function(tab)
 	footer.Position = UDim2.new(0, 0, 1, -50)
 	footer.BackgroundTransparency = 1
 
-	local btn = Instance.new("TextButton", footer)
-	btn.Size = UDim2.new(0, 160, 0, 36)
-	btn.Position = UDim2.new(0.5, -80, 0.5, -18)
-	btn.Text = "Collect Now"
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 16
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	local collectBtn = Instance.new("TextButton", footer)
+	collectBtn.Size = UDim2.new(0, 160, 0, 36)
+	collectBtn.Position = UDim2.new(0.5, -170, 0.5, -18)
+	collectBtn.Text = "Collect Now"
+	collectBtn.Font = Enum.Font.GothamBold
+	collectBtn.TextSize = 16
+	collectBtn.TextColor3 = Color3.new(1, 1, 1)
+	collectBtn.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
+	Instance.new("UICorner", collectBtn).CornerRadius = UDim.new(0, 6)
 
-	btn.MouseButton1Click:Connect(collectFruits)
+	collectBtn.MouseButton1Click:Connect(collectFruits)
+
+	local autoSellBtn = Instance.new("TextButton", footer)
+	autoSellBtn.Size = UDim2.new(0, 160, 0, 36)
+	autoSellBtn.Position = UDim2.new(0.5, 10, 0.5, -18)
+	autoSellBtn.Text = "Auto Sell: OFF"
+	autoSellBtn.Font = Enum.Font.GothamBold
+	autoSellBtn.TextSize = 16
+	autoSellBtn.TextColor3 = Color3.new(1, 1, 1)
+	autoSellBtn.BackgroundColor3 = Color3.fromRGB(80, 160, 80)
+	Instance.new("UICorner", autoSellBtn).CornerRadius = UDim.new(0, 6)
+
+	autoSellBtn.MouseButton1Click:Connect(function()
+		autoSellEnabled = not autoSellEnabled
+		autoSellBtn.Text = autoSellEnabled and "Auto Sell: ON" or "Auto Sell: OFF"
+	end)
+
+	task.spawn(function()
+		while true do
+			task.wait(10)
+			if autoSellEnabled then
+				print("💰 Auto-selling inventory...")
+				SellAllEvent:FireServer()
+			end
+		end
+	end)
 end
