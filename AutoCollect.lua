@@ -1,3 +1,4 @@
+-- FULL SCRIPT BELOW (with mutation handling)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
@@ -14,20 +15,16 @@ end
 local ItemData = import("ItemData")
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
-
-local mutationMap = {
-	FrozenParticle = "Frozen",
-	WetParticle = "Wet",
-	ChilledParticle = "Chilled",
-	ShockedParticle = "Shocked"
+local mutationTypes = {
+	"FrozenParticle",
+	"WetParticle",
+	"ChilledParticle",
+	"ShockedParticle"
 }
 
 local selectedCrops, selectedVariants, selectedMutations = {}, {}, {}
-for particle in pairs(mutationMap) do selectedMutations[particle] = false end
-
 local flyingBP, flyingGyro, noclipConn
 
--- Stable flying system
 local function enableFly()
 	local char = LocalPlayer.Character
 	local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -82,6 +79,15 @@ local function disableFly()
 	end
 end
 
+local function hasBadMutations(fruit)
+	for _, mut in ipairs(mutationTypes) do
+		if fruit:FindFirstChild(mut, true) and not selectedMutations[mut] then
+			return true
+		end
+	end
+	return false
+end
+
 local function getFruitParts(crop)
 	local fruits = {}
 	for _, descendant in ipairs(crop:GetDescendants()) do
@@ -130,20 +136,9 @@ local function collectFruits()
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			local variantObj = fruit:FindFirstChild("Variant")
 			local variant = (variantObj and typeof(variantObj.Value) == "string" and variantObj.Value) or "Normal"
-			if not (variant == "Normal" or variant == "Gold" or variant == "Rainbow") then
-				variant = "Normal"
-			end
-			if not selectedVariants[variant] then continue end
 
-			-- Mutation check
-			local hasAllMutations = true
-			for particle, selected in pairs(selectedMutations) do
-				if selected and not fruit:FindFirstChildWhichIsA(particle, true) then
-					hasAllMutations = false
-					break
-				end
-			end
-			if not hasAllMutations then continue end
+			if not selectedVariants[variant] then continue end
+			if hasBadMutations(fruit) then skipped += 1 continue end
 
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 			local part = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
@@ -160,9 +155,7 @@ local function collectFruits()
 			local success = false
 			for _ = 1, 10 do
 				if not prompt:IsDescendantOf(game) then success = true break end
-				pcall(function()
-					fireproximityprompt(prompt)
-				end)
+				pcall(function() fireproximityprompt(prompt) end)
 				task.wait(0.25)
 			end
 
@@ -261,10 +254,11 @@ return function(tab)
 		end)
 	end
 
-	createHeader(scroll, "❄️ Required Mutations")
-	for particle, displayName in pairs(mutationMap) do
-		createCheckbox(scroll, displayName, function(state)
-			selectedMutations[particle] = state
+	createHeader(scroll, "❄️ Select Mutations")
+	for _, mut in ipairs(mutationTypes) do
+		selectedMutations[mut] = false
+		createCheckbox(scroll, mut, function(state)
+			selectedMutations[mut] = state
 		end)
 	end
 
