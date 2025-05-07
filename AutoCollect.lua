@@ -59,7 +59,7 @@ local function collectFruits()
 								name, variant, tostring(cropMatch), tostring(variantMatch), tostring(particleMatch)))
 
 							if cropMatch and variantMatch and particleMatch then
-								local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
+								local prompt = fruit:FindFirstDescendantWhichIsA("ProximityPrompt")
 								if prompt then
 									print("✨ Collecting:", fruit.Name)
 									fireproximityprompt(prompt)
