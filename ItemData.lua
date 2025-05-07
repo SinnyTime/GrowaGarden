@@ -5,7 +5,9 @@ module.Items = {
 	Fruits = {
 		"Carrot", "Strawberry", "Blueberry", "Orange Tulip", "Tomato", "Corn",
 		"Daffodil", "Watermelon", "Pumpkin", "Apple", "Bamboo", "Coconut",
-		"Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper",
+		"Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper"
+	},
+	PremiumFruits = {
 		"Raspberry", "Cranberry", "Durian", "Eggplant", "Lotus"
 	},
 	Gears = {
