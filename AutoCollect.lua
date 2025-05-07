@@ -80,16 +80,40 @@ local function disableFly()
 end
 
 local function hasBadMutations(fruit)
-	for mutation in pairs(mutationMap) do
-		for _, descendant in ipairs(fruit:GetDescendants()) do
-			if descendant.Name == mutation then
-				if not selectedMutations[mutation] then
-					return true
-				end
-			end
+	local found = {}
+
+	-- Collect all mutation particles on this fruit
+	for _, descendant in ipairs(fruit:GetDescendants()) do
+		if mutationMap[descendant.Name] then
+			found[descendant.Name] = true
 		end
 	end
-	return false
+
+	-- If user selected no mutations, the fruit must also have none
+	local userSelected = {}
+	for mutation, selected in pairs(selectedMutations) do
+		if selected then
+			userSelected[mutation] = true
+		end
+	end
+
+	if next(userSelected) == nil then
+		return next(found) ~= nil -- has any mutation? disallowed.
+	end
+
+	-- Compare found mutations to user selection
+	for mutation in pairs(userSelected) do
+		if not found[mutation] then
+			return true -- missing a required mutation
+		end
+	end
+	for mutation in pairs(found) do
+		if not userSelected[mutation] then
+			return true -- has an extra mutation not allowed
+		end
+	end
+
+	return false -- everything matched exactly!
 end
 
 local function getFruitParts(crop)
