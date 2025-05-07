@@ -17,7 +17,6 @@ local variants = { "Normal", "Gold", "Rainbow" }
 
 local selectedCrops, selectedVariants = {}, {}
 
--- Flying and noclip utils
 local function enableFly()
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
@@ -38,27 +37,21 @@ end
 
 local function moveTo(pos)
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-	local bp = root:FindFirstChild("FlyBP")
-	if bp then bp.Position = pos + Vector3.new(0, 5, 0) end
+	if root then
+		local bp = root:FindFirstChild("FlyBP")
+		if bp then bp.Position = pos end
+	end
 end
 
 local function disableFly()
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-	local bp = root:FindFirstChild("FlyBP")
-	if bp then bp:Destroy() end
+	if root then
+		local bp = root:FindFirstChild("FlyBP")
+		if bp then bp:Destroy() end
+	end
 	LocalPlayer.Character:SetAttribute("NoclipActive", false)
 	for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
 		if part:IsA("BasePart") then part.CanCollide = true end
-	end
-end
-
-local function lookAt(target)
-	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if root then
-		root.CFrame = CFrame.lookAt(root.Position, target.Position)
-		Workspace.CurrentCamera.CFrame = CFrame.new(Workspace.CurrentCamera.CFrame.Position, target.Position)
 	end
 end
 
@@ -71,18 +64,17 @@ local function getFruitParts(crop)
 			end
 		end
 	else
-		for _, obj in ipairs(crop:GetChildren()) do
-			if tonumber(obj.Name) and (obj:IsA("Model") or obj:IsA("Part")) then
-				table.insert(fruits, obj)
+		for _, child in ipairs(crop:GetChildren()) do
+			if tonumber(child.Name) and (child:IsA("Model") or child:IsA("Part")) then
+				table.insert(fruits, child)
 			end
 		end
 	end
 	return fruits
 end
 
--- 🍓 Main Collection Logic
 local function collectFruits()
-	print("🌿 Starting collection...")
+	print("🍇 Starting fruit collection...")
 	local collected, skipped = 0, 0
 
 	local root = Workspace:FindFirstChild("Farm")
@@ -103,60 +95,46 @@ local function collectFruits()
 	local plants = playerFarm.Important:FindFirstChild("Plants_Physical")
 	if not plants then return warn("❌ No Plants_Physical folder found.") end
 
-	local returnPos = playerFarm:FindFirstChild("Sign") and playerFarm.Sign:FindFirstChild("Core_Part") and playerFarm.Sign.Core_Part.Position
+	local returnPos = playerFarm:FindFirstChild("Sign")
+		and playerFarm.Sign:FindFirstChild("Core_Part")
+		and playerFarm.Sign.Core_Part.Position
 
 	enableFly()
 
 	for _, crop in ipairs(plants:GetChildren()) do
-	local cropName = crop.Name
-	local matchFound = false
-	for selected, enabled in pairs(selectedCrops) do
-		if enabled and cropName:lower():gsub("%s+", "") == selected:lower():gsub("%s+", "") then
-			matchFound = true
-			break
-		end
-	end
-	if not matchFound then continue end
+		local cropName = crop.Name
+		if not selectedCrops[cropName] then continue end
 
 		for _, fruit in ipairs(getFruitParts(crop)) do
-			local variant = fruit:GetAttribute("Variant")
-			if not variant or not selectedVariants[variant] then
-				continue
-			end
-	
+			local variant = fruit:GetAttribute("Variant") or "Normal"
+			if not selectedVariants[variant] then continue end
+
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
-			local targetPart = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
-			if not (prompt and targetPart) then skipped += 1 continue end
-	
-			-- Adjust positioning
-			local above = targetPart.Position + Vector3.new(0, 1.5, 0)
+			local part = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
+			if not (prompt and part) then skipped += 1 continue end
+
+			local above = part.Position + Vector3.new(0, 3, 0)
 			moveTo(above)
-			task.wait(0.4)
-	
-			-- Look straight down
+			task.wait(0.35)
+
 			local cam = Workspace.CurrentCamera
-			if cam then
-				cam.CFrame = CFrame.new(above, targetPart.Position)
-			end
-	
-			-- Try until collected
+			if cam then cam.CFrame = CFrame.new(above, part.Position) end
+			task.wait(0.15)
+
 			local success = false
-			for i = 1, 10 do
-				if not prompt:IsDescendantOf(game) then
-					success = true
-					break
-				end
+			for _ = 1, 10 do
+				if not prompt:IsDescendantOf(game) then success = true break end
 				pcall(function()
 					fireproximityprompt(prompt)
 				end)
-				task.wait(0.3)
+				task.wait(0.25)
 			end
-	
+
 			if success then
 				collected += 1
 			else
 				skipped += 1
-				warn("⚠️ Failed to collect:", cropName, fruit.Name)
+				warn("⚠️ Could not collect:", cropName, fruit.Name)
 			end
 		end
 	end
@@ -170,7 +148,6 @@ local function collectFruits()
 	print(`✅ Done. Collected: {collected}, Skipped: {skipped}`)
 end
 
--- 🌾 UI Setup
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
@@ -216,7 +193,6 @@ local function createCheckbox(parent, labelText, callback)
 	end)
 end
 
--- 🧩 Hook into tab
 return function(tab)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(1, 0, 1, -50)
