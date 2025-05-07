@@ -98,6 +98,7 @@ end
 
 -- Get valid inventory items
 local function getInventoryItems()
+	print("Getting inventory")
 	local backpack = LocalPlayer:WaitForChild("Backpack")
 	local items = {}
 
@@ -112,6 +113,7 @@ end
 
 -- Sell filtered tools
 local function sellItems(items)
+	print("Selling items...")
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 	local originalPos = root.Position
