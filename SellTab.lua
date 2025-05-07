@@ -40,30 +40,40 @@ local selectedMutations = {}
 -- Parse tool name
 local function parseToolName(toolName)
 	local mutations = {}
+	local fruitNameFound = nil
+
+	-- Identify fruit in name
+	for _, fruit in ipairs(fruits) do
+		local startIdx = toolName:find(fruit)
+		if startIdx then
+			fruitNameFound = fruit
+			break
+		end
+	end
+
+	if not fruitNameFound then
+		return nil, "Normal", {} -- not a recognized fruit
+	end
+
+	-- Extract everything before the fruit name
+	local prefix = toolName:split(fruitNameFound)[1]
+
+	-- Grab valid mutations in prefix
+	for mutation in pairs(mutationMap) do
+		if prefix:find("%[" .. mutation .. "%]") then
+			table.insert(mutations, mutation)
+		end
+	end
+
+	-- Determine variant
 	local variant = "Normal"
-	local name = toolName
-
-	-- Extract bracket content like [Wet, Shocked, Gold]
-	local mutationString = name:match("%[(.-)%]")
-	if mutationString then
-		for entry in mutationString:gmatch("[^,%s]+") do
-			if entry == "Gold" or entry == "Rainbow" then
-				variant = entry
-			else
-				table.insert(mutations, entry)
-			end
-		end
-		name = name:gsub("%[.-%]%s*", "") -- remove [ ... ] from name
+	if table.find(mutations, "Gold") then
+		variant = "Gold"
+	elseif table.find(mutations, "Rainbow") then
+		variant = "Rainbow"
 	end
 
-	-- Identify fruit name from known list
-	for _, fruitName in ipairs(fruits) do
-		if name:find(fruitName) then
-			return fruitName, variant, mutations
-		end
-	end
-
-	return nil, variant, mutations
+	return fruitNameFound, variant, mutations
 end
 
 -- Check if tool should be sold
