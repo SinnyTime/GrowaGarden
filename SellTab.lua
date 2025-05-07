@@ -74,32 +74,34 @@ end
 
 -- Check if tool should be sold
 local function isToolValid(tool)
-	if tool.Name:find("Seed") then
-		print("❌ Skipped: Seed items not allowed.")
-		return false
-	end
 	local fruitName, variant, mutations = parseToolName(tool.Name)
 	print(`[Debug] Tool: {tool.Name} | Parsed: Fruit = {fruitName}, Variant = {variant}, Mutations = {#mutations}`)
 
+	-- Skip if not recognized
 	if not fruitName then
 		print("❌ Skipped: Not a recognized fruit.")
 		return false
 	end
 
+	-- Skip if name includes "Seed"
+	if tool.Name:lower():find("seed") then
+		print("❌ Skipped: Seed detected.")
+		return false
+	end
+
+	-- Fruit filter
 	if not allFruits and not selectedFruits[fruitName] then
 		print("❌ Skipped: Fruit not selected.")
 		return false
 	end
 
+	-- Variant filter
 	if not allVariants and not selectedVariants[variant] then
 		print("❌ Skipped: Variant not selected.")
 		return false
 	end
 
-	if allMutations then
-		return true
-	end
-
+	-- Mutation filter
 	local userSelected = {}
 	for mutation, isSelected in pairs(selectedMutations) do
 		if isSelected then
@@ -107,21 +109,24 @@ local function isToolValid(tool)
 		end
 	end
 
-	if next(userSelected) == nil then
-		-- No mutations selected = must be a clean item
+	if allMutations then
+		-- Allow any mutations if All Mutations is enabled
+		return true
+	elseif next(userSelected) == nil then
+		-- No mutations allowed if none selected
 		if #mutations > 0 then
-			print("❌ Skipped: Mutated, but expecting clean.")
+			print("❌ Skipped: Mutated, expected clean.")
 			return false
 		end
 	else
-		-- Must match selected mutations *exactly*
+		-- Must match exactly
 		if #mutations ~= #userSelected then
 			print("❌ Skipped: Mutation count mismatch.")
 			return false
 		end
 		for _, mutation in ipairs(mutations) do
 			if not userSelected[mutation] then
-				print("❌ Skipped: Has mutation not selected.")
+				print("❌ Skipped: Unexpected mutation:", mutation)
 				return false
 			end
 		end
