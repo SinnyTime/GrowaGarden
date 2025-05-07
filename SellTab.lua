@@ -100,36 +100,39 @@ local function isToolValid(tool)
 	end
 
 	-- Mutation filter
+	-- Mutation filter
 	local userSelected = {}
 	for mutation, isSelected in pairs(selectedMutations) do
 		if isSelected then
 			userSelected[mutation] = true
 		end
 	end
-
+	
 	if allMutations then
-		-- Allow any mutations if All Mutations is enabled
+		-- Accept any mutation state (mutated or clean)
 		return true
 	elseif next(userSelected) == nil then
-		-- No mutations allowed if none selected
+		-- Require no mutations
 		if #mutations > 0 then
-			print("❌ Skipped: Mutated, expected clean.")
+			print("❌ Skipped: Expected clean, found mutations.")
 			return false
 		end
 	else
-		-- Must match exactly
-		if #mutations ~= #userSelected then
-			print("❌ Skipped: Mutation count mismatch.")
-			return false
-		end
+		-- Require exact matches
+		local matchCount = 0
 		for _, mutation in ipairs(mutations) do
-			if not userSelected[mutation] then
+			if userSelected[mutation] then
+				matchCount += 1
+			else
 				print("❌ Skipped: Unexpected mutation:", mutation)
 				return false
 			end
 		end
+		if matchCount ~= #mutations or matchCount ~= #userSelected then
+			print("❌ Skipped: Mutation count mismatch.")
+			return false
+		end
 	end
-
 	return true
 end
 
