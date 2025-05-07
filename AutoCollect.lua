@@ -106,9 +106,7 @@ local function collectFruits()
 	local returnPos = playerFarm:FindFirstChild("Sign") and playerFarm.Sign:FindFirstChild("Core_Part") and playerFarm.Sign.Core_Part.Position
 
 	enableFly()
-
-	-- Inside the collectFruits loop, replace the individual collection logic with this:
-
+	
 	for _, crop in ipairs(plants:GetChildren()) do
 		local cropName = crop.Name
 		if not selectedCrops[cropName] then continue end
@@ -121,39 +119,60 @@ local function collectFruits()
 			local targetPart = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
 			if not (prompt and targetPart) then skipped += 1 continue end
 	
-			-- Adjust positioning
-			local above = targetPart.Position + Vector3.new(0, 2, 0)
-			moveTo(above)
-			task.wait(0.4)
+			prompt.MaxActivationDistance = 9999
+			prompt.RequiresLineOfSight = false
+			prompt.HoldDuration = 0
 	
-			-- Look straight down
-			local cam = Workspace.CurrentCamera
-			if cam then
-				cam.CFrame = CFrame.new(above, targetPart.Position)
+			-- Fly above target
+			local hoverPos = targetPart.Position + Vector3.new(0, 4, 0)
+			moveTo(hoverPos)
+	
+			-- Wait until we're close enough to be safely above
+			local reached = false
+			for _ = 1, 30 do
+				local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+				if root and (root.Position - hoverPos).Magnitude <= 1 then
+					reached = true
+					break
+				end
+				task.wait(0.1)
 			end
 	
-			-- Try until collected
+			if not reached then
+				warn("⚠️ Failed to reach fruit", fruit.Name)
+				skipped += 1
+				continue
+			end
+	
+			-- Look down *after* reaching the hover point
+			local cam = Workspace.CurrentCamera
+			if cam then
+				cam.CFrame = CFrame.new(cam.CFrame.Position, targetPart.Position)
+			end
+	
+			task.wait(0.2)
+	
+			-- Try multiple times until prompt disappears
 			local success = false
-			for i = 1, 10 do
-				if not prompt:IsDescendantOf(game) then
+			for i = 1, 12 do
+				if not prompt:IsDescendantOf(game) or not prompt.Enabled then
 					success = true
 					break
 				end
 				pcall(function()
 					fireproximityprompt(prompt)
 				end)
-				task.wait(0.3)
+				task.wait(0.35)
 			end
 	
 			if success then
 				collected += 1
 			else
 				skipped += 1
-				warn("⚠️ Failed to collect:", cropName, fruit.Name)
+				warn("❌ Failed to collect:", fruit.Name)
 			end
 		end
 	end
-
 
 	if returnPos then
 		moveTo(returnPos + Vector3.new(0, 10, 0))
