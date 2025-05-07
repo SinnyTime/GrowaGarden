@@ -43,6 +43,18 @@ local function enableFly()
 	LocalPlayer.Character:SetAttribute("NoclipActive", true)
 end
 
+-- Continuous noclip handler
+RunService.Stepped:Connect(function()
+	if LocalPlayer.Character and LocalPlayer.Character:GetAttribute("NoclipActive") then
+		for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+
 local function moveTo(pos)
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if root and flyingBP and flyingGyro then
