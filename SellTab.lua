@@ -42,34 +42,33 @@ local allMutations = false
 
 -- Parse tool name
 local function parseToolName(toolName)
+	-- Ignore things like "Watering Can", "Towel", etc
+	if not toolName:match("^%[") then
+		return nil, "Normal", {}
+	end
+
+	-- Extract the [X, Y, Z] section
+	local tagSection = toolName:match("^%[(.-)%]")
+	if not tagSection then return nil, "Normal", {} end
+
+	-- Extract fruit name (after first "]" and before final "[")
+	local nameStart = toolName:find("]%s*") and (toolName:find("]%s*") + 1)
+	local nameEnd = toolName:find("%s*%[", nameStart)
+	local fruitName = nameEnd and toolName:sub(nameStart, nameEnd - 1):gsub("^%s+", "") or nil
+	if not fruitName then return nil, "Normal", {} end
+
+	-- Parse tag contents
 	local mutations = {}
-	local fruitNameFound = nil
-
-	for _, fruit in ipairs(fruits) do
-		local startIdx = toolName:find(fruit)
-		if startIdx then
-			fruitNameFound = fruit
-			break
-		end
-	end
-	if not fruitNameFound then return nil, "Normal", {} end
-
-	local prefix = toolName:sub(1, toolName:find(fruitNameFound) - 1)
-
 	local variant = "Normal"
-	if prefix:find("Gold") then
-		variant = "Gold"
-	elseif prefix:find("Rainbow") then
-		variant = "Rainbow"
-	end
-
-	for mutation in pairs(mutationMap) do
-		if prefix:lower():find(mutation:lower()) then
-			table.insert(mutations, mutation)
+	for tag in tagSection:gmatch("[^,%s]+") do
+		if tag == "Gold" or tag == "Rainbow" then
+			variant = tag
+		elseif mutationMap[tag] then
+			table.insert(mutations, tag)
 		end
 	end
 
-	return fruitNameFound, variant, mutations
+	return fruitName, variant, mutations
 end
 
 -- Check if tool should be sold
