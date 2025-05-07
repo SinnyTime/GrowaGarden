@@ -142,92 +142,99 @@ return function(tab)
 
 	-- 🔽 Collapsible Section Helper
 	local function createCollapsibleSection(titleText, itemList, selectionTable)
-		local section = Instance.new("Frame")
-		section.Size = UDim2.new(1, 0, 0, 30)
-		section.BackgroundTransparency = 1
-		section.Parent = scroll
+	local section = Instance.new("Frame")
+	section.Size = UDim2.new(1, 0, 0, 30)
+	section.BackgroundTransparency = 1
+	section.Parent = scroll
 
-		local btn = Instance.new("TextButton", section)
-		btn.Size = UDim2.new(1, 0, 1, 0)
-		btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-		btn.Text = ""
-		Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 1, 0)
+	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	btn.Text = ""
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+	btn.Parent = section
 
-		local arrow = Instance.new("TextLabel", btn)
-		arrow.Size = UDim2.new(0, 20, 1, 0)
-		arrow.Position = UDim2.new(0, 5, 0, 0)
-		arrow.Text = "▸"
-		arrow.TextColor3 = Color3.new(1, 1, 1)
-		arrow.Font = Enum.Font.GothamBold
-		arrow.TextSize = 16
-		arrow.BackgroundTransparency = 1
+	local arrow = Instance.new("TextLabel")
+	arrow.Size = UDim2.new(0, 20, 1, 0)
+	arrow.Position = UDim2.new(0, 5, 0, 0)
+	arrow.Text = "▸"
+	arrow.TextColor3 = Color3.new(1, 1, 1)
+	arrow.Font = Enum.Font.GothamBold
+	arrow.TextSize = 16
+	arrow.BackgroundTransparency = 1
+	arrow.Parent = btn
 
-		local label = Instance.new("TextLabel", btn)
-		label.Size = UDim2.new(1, -30, 1, 0)
-		label.Position = UDim2.new(0, 30, 0, 0)
-		label.Text = titleText
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -30, 1, 0)
+	label.Position = UDim2.new(0, 30, 0, 0)
+	label.Text = titleText
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 16
+	label.BackgroundTransparency = 1
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = btn
+
+	local holder = Instance.new("Frame")
+	holder.Size = UDim2.new(1, 0, 0, 0)
+	holder.BackgroundTransparency = 1
+	holder.ClipsDescendants = true
+	holder.Parent = scroll
+
+	local innerLayout = Instance.new("UIListLayout")
+	innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	innerLayout.Padding = UDim.new(0, 4)
+	innerLayout.Parent = holder
+
+	local contentHeight = 0
+	innerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		contentHeight = innerLayout.AbsoluteContentSize.Y
+	end)
+
+	local isOpen = false
+	btn.MouseButton1Click:Connect(function()
+		isOpen = not isOpen
+		arrow.Text = isOpen and "▼" or "▸"
+		local goalSize = isOpen and contentHeight or 0
+		TweenService:Create(holder, TweenInfo.new(0.25), { Size = UDim2.new(1, 0, 0, goalSize) }):Play()
+	end)
+
+	for _, item in ipairs(itemList) do
+		selectionTable[item] = false
+
+		local container = Instance.new("Frame")
+		container.Size = UDim2.new(1, 0, 0, 26)
+		container.BackgroundTransparency = 1
+		container.Parent = holder
+
+		local box = Instance.new("TextButton")
+		box.Size = UDim2.new(0, 26, 1, 0)
+		box.Text = "☐"
+		box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+		box.TextColor3 = Color3.new(1, 1, 1)
+		box.Font = Enum.Font.Gotham
+		box.TextSize = 16
+		Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
+		box.Parent = container
+
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(1, -34, 1, 0)
+		label.Position = UDim2.new(0, 34, 0, 0)
+		label.Text = item
 		label.TextColor3 = Color3.new(1, 1, 1)
-		label.Font = Enum.Font.GothamBold
-		label.TextSize = 16
+		label.Font = Enum.Font.Gotham
+		label.TextSize = 14
 		label.BackgroundTransparency = 1
 		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = container
 
-		local holder = Instance.new("Frame", scroll)
-		holder.Size = UDim2.new(1, 0, 0, 0)
-		holder.BackgroundTransparency = 1
-		holder.ClipsDescendants = true
-
-		local innerLayout = Instance.new("UIListLayout", holder)
-		innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		innerLayout.Padding = UDim.new(0, 4)
-
-		local contentHeight = 0
-		innerLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-			contentHeight = innerLayout.AbsoluteContentSize.Y
+		box.MouseButton1Click:Connect(function()
+			selectionTable[item] = not selectionTable[item]
+			box.Text = selectionTable[item] and "☑" or "☐"
 		end)
-
-		local isOpen = false
-		btn.MouseButton1Click:Connect(function()
-			isOpen = not isOpen
-			arrow.Text = isOpen and "▼" or "▸"
-			local goalSize = isOpen and contentHeight or 0
-			TweenService:Create(holder, TweenInfo.new(0.25), { Size = UDim2.new(1, 0, 0, goalSize) }):Play()
-		end)
-
-		for _, item in ipairs(itemList) do
-			selectionTable[item] = false
-			local container = Instance.new("Frame")
-			container.Size = UDim2.new(1, 0, 0, 26)
-			container.BackgroundTransparency = 1
-			container.Parent = holder
-
-			local box = Instance.new("TextButton")
-			box.Size = UDim2.new(0, 26, 1, 0)
-			box.Text = "☐"
-			box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-			box.TextColor3 = Color3.new(1, 1, 1)
-			box.Font = Enum.Font.Gotham
-			box.TextSize = 16
-			Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
-			box.Parent = container
-
-			local label = Instance.new("TextLabel")
-			label.Size = UDim2.new(1, -34, 1, 0)
-			label.Position = UDim2.new(0, 34, 0, 0)
-			label.Text = item
-			label.TextColor3 = Color3.new(1, 1, 1)
-			label.Font = Enum.Font.Gotham
-			label.TextSize = 14
-			label.BackgroundTransparency = 1
-			label.TextXAlignment = Enum.TextXAlignment.Left
-			label.Parent = container
-
-			box.MouseButton1Click:Connect(function()
-				selectionTable[item] = not selectionTable[item]
-				box.Text = selectionTable[item] and "☑" or "☐"
-			end)
-		end
 	end
+end
+
 
 	-- 🧩 Build Sections
 	createCollapsibleSection("🌽 Select Crops", crops, selectedCrops)
