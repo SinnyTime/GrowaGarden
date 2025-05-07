@@ -81,35 +81,46 @@ local function isToolValid(tool)
 		print("❌ Skipped: Not a recognized fruit.")
 		return false
 	end
+
 	if not allFruits and not selectedFruits[fruitName] then
-		print("❌ Skipped: Fruit not selected in UI.")
+		print("❌ Skipped: Fruit not selected.")
 		return false
 	end
+
 	if not allVariants and not selectedVariants[variant] then
 		print("❌ Skipped: Variant not selected.")
 		return false
 	end
 
-	local mutationFiltersActive = false
-	for _, v in pairs(selectedMutations) do
-		if v then
-			mutationFiltersActive = true
-			break
+	if allMutations then
+		return true
+	end
+
+	local userSelected = {}
+	for mutation, isSelected in pairs(selectedMutations) do
+		if isSelected then
+			userSelected[mutation] = true
 		end
 	end
 
-	if mutationFiltersActive and not allMutations then
+	if next(userSelected) == nil then
+		-- No mutations selected = must be a clean item
+		if #mutations > 0 then
+			print("❌ Skipped: Mutated, but expecting clean.")
+			return false
+		end
+	else
+		-- Must match selected mutations *exactly*
+		if #mutations ~= table.getn(userSelected) then
+			print("❌ Skipped: Mutation count mismatch.")
+			return false
+		end
 		for _, mutation in ipairs(mutations) do
-			if not selectedMutations[mutation] then
-				print("❌ Skipped: Has disallowed mutation", tool.Name)
+			if not userSelected[mutation] then
+				print("❌ Skipped: Has mutation not selected.")
 				return false
 			end
 		end
-	end
-
-	if not mutationFiltersActive and not allMutations and #mutations > 0 then
-		print("❌ Skipped: Mutated item but no mutations allowed.")
-		return false
 	end
 
 	return true
