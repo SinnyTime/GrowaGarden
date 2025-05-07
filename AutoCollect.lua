@@ -16,7 +16,7 @@ local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
 
 local selectedCrops, selectedVariants = {}, {}
-local flyingBP, flyingGyro
+local flyingBP, flyingGyro, noclipConn
 
 -- Stable flying system
 local function enableFly()
@@ -41,19 +41,16 @@ local function enableFly()
 	flyingGyro.Parent = root
 
 	LocalPlayer.Character:SetAttribute("NoclipActive", true)
-end
-
--- Continuous noclip handler
-RunService.Stepped:Connect(function()
-	if LocalPlayer.Character and LocalPlayer.Character:GetAttribute("NoclipActive") then
-		for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = false
+	noclipConn = RunService.Stepped:Connect(function()
+		if LocalPlayer.Character and LocalPlayer.Character:GetAttribute("NoclipActive") then
+			for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
 			end
 		end
-	end
-end)
-
+	end)
+end
 
 local function moveTo(pos)
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -69,6 +66,7 @@ local function disableFly()
 		if flyingBP then flyingBP:Destroy() flyingBP = nil end
 		if flyingGyro then flyingGyro:Destroy() flyingGyro = nil end
 	end
+	if noclipConn then noclipConn:Disconnect() noclipConn = nil end
 	LocalPlayer.Character:SetAttribute("NoclipActive", false)
 	for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
 		if part:IsA("BasePart") then part.CanCollide = true end
@@ -133,7 +131,6 @@ local function collectFruits()
 				variant = "Normal"
 			end
 			if not selectedVariants[variant] then
-				-- Skip this fruit entirely if its variant isn't selected
 				continue
 			end
 
