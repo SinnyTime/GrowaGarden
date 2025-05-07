@@ -75,16 +75,11 @@ end
 
 local function getFruitParts(crop)
 	local fruits = {}
-	if crop:FindFirstChild("Fruits") then
-		for _, fruit in ipairs(crop.Fruits:GetChildren()) do
-			if fruit:IsA("Model") or fruit:IsA("Part") then
-				table.insert(fruits, fruit)
-			end
-		end
-	else
-		for _, obj in ipairs(crop:GetChildren()) do
-			if tonumber(obj.Name) and (obj:IsA("Model") or obj:IsA("Part")) then
-				table.insert(fruits, obj)
+	for _, descendant in ipairs(crop:GetDescendants()) do
+		if descendant:IsA("ProximityPrompt") then
+			local part = descendant:FindFirstAncestorWhichIsA("Model") or descendant:FindFirstAncestorWhichIsA("BasePart")
+			if part and not table.find(fruits, part) then
+				table.insert(fruits, part)
 			end
 		end
 	end
