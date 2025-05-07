@@ -31,9 +31,12 @@ local mutationMap = {
 	ShockedParticle = "Shocked"
 }
 
+local variantList = { "Normal", "Gold", "Rainbow" }
+
 -- UI Elements
 local selectedFruits = {}
 local selectedMutations = {}
+local selectedVariants = {}
 
 -- Utility Functions
 local function hasBadMutations(item)
@@ -43,6 +46,12 @@ local function hasBadMutations(item)
 		end
 	end
 	return false
+end
+
+local function matchesVariant(tool)
+	local variantObj = tool:FindFirstChild("Variant")
+	local variant = (variantObj and typeof(variantObj.Value) == "string" and variantObj.Value) or "Normal"
+	return selectedVariants[variant]
 end
 
 local function teleportTo(position)
@@ -58,9 +67,11 @@ local function getInventoryItems()
 
 	for _, tool in ipairs(backpack:GetChildren()) do
 		for _, fruitName in ipairs(fruits) do
-			if tool.Name:match(fruitName) and selectedFruits[fruitName] and not hasBadMutations(tool) then
-				table.insert(items, tool)
-				break
+			if tool.Name:match(fruitName) and selectedFruits[fruitName] then
+				if not hasBadMutations(tool) and matchesVariant(tool) then
+					table.insert(items, tool)
+					break
+				end
 			end
 		end
 	end
@@ -167,6 +178,15 @@ return function(tab)
 		selectedFruits[fruit] = false
 		createCheckbox(fruit, function(state)
 			selectedFruits[fruit] = state
+		end)
+	end
+
+	-- Variants
+	createHeader("🌈 Select Variants")
+	for _, variant in ipairs(variantList) do
+		selectedVariants[variant] = false
+		createCheckbox(variant, function(state)
+			selectedVariants[variant] = state
 		end)
 	end
 
