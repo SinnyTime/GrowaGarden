@@ -78,7 +78,7 @@ local function collectFruits()
 
 	local plants = playerFarm:FindFirstChild("Plants_Physical")
 	if not plants then
-		warn("❌ No 'Objects_Physical' folder found in your farm.")
+		warn("❌ No 'Plants_Physical' folder found in your farm.")
 		return
 	end
 
