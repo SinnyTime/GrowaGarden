@@ -48,18 +48,21 @@ local function hasRequiredParticles(fruit)
 end
 
 local function getReasonSkipped(fruit, cropName)
-		if not selectedCrops[cropName] then
-		return "❌ Crop not selected: " cropName
+	if not selectedCrops[cropName] then
+		return "❌ Crop not selected: " .. cropName
 	end
+
 	local variant = fruit:GetAttribute("Variant") or "Normal"
 	if not selectedVariants[variant] then
 		return "❌ Variant not selected: " .. variant
 	end
+
 	for particle, required in pairs(selectedParticles) do
 		if required and not deepFindParticle(fruit, particle) then
 			return "❌ Missing mutation: " .. mutationMap[particle]
 		end
 	end
+
 	return nil
 end
 
