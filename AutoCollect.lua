@@ -152,14 +152,15 @@ local function collectFruits()
 			if prompt then
 				local originalParent = prompt.Parent
 				prompt.Parent = rootPart
-				task.wait(0.25)
-
-				-- Fix key press simulation: Using the correct event handling
-				local inputObject = Instance.new("InputObject")
-				inputObject.UserInputType = Enum.UserInputType.Keyboard
-				inputObject.KeyCode = Enum.KeyCode.E
-				UserInputService.InputBegan:Fire(inputObject)
-
+				task.wait(0.1)
+			
+				-- Simulate holding "E"
+				pcall(function()
+					prompt:InputHoldBegin(Enum.UserInputType.Keyboard)
+					task.wait(prompt.HoldDuration or 0.5)
+					prompt:InputHoldEnd(Enum.UserInputType.Keyboard)
+				end)
+			
 				collected += 1
 				task.wait(0.25)
 				prompt.Parent = originalParent
@@ -167,6 +168,7 @@ local function collectFruits()
 				print("❌ No ProximityPrompt for", cropName)
 				skipped += 1
 			end
+
 		end
 	end
 
