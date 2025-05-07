@@ -14,21 +14,26 @@ local ItemData = import("ItemData")
 
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
-local particles = { "FrozenParticle", "WetParticle", "ChilledParticle", "ShockedParticle" }
+local mutations = {
+	FrozenParticle = "Frozen",
+	WetParticle = "Wet",
+	ChilledParticle = "Chilled",
+	ShockedParticle = "Shocked"
+}
 
 local selectedCrops = {}
 local selectedVariants = {}
-local selectedParticles = {}
+local selectedMutations = {}
 
--- ✅ Check if fruit has all selected particles
-local function hasRequiredParticles(fruit)
-	for particle, enabled in pairs(selectedParticles) do
+-- ✅ Check if fruit has all selected mutations
+local function hasRequiredMutations(fruit)
+	for mutationName, enabled in pairs(selectedMutations) do
 		if enabled then
-			if not fruit:FindFirstChild(particle) then
-				print("[❌] Missing particle:", particle, "on fruit:", fruit.Name)
+			if not fruit:FindFirstChild(mutationName) then
+				print("[❌] Missing mutation:", mutationName, "on fruit:", fruit.Name)
 				return false
 			else
-				print("[✅] Found particle:", particle, "on", fruit.Name)
+				print("[✅] Found mutation:", mutationName, "on", fruit.Name)
 			end
 		end
 	end
@@ -67,9 +72,9 @@ local function collectFruits()
 								continue
 							end
 
-							if not hasRequiredParticles(fruit) then
+							if not hasRequiredMutations(fruit) then
 								skipped += 1
-								print(`⚪ Skipped "{name}" (missing required particles)`)
+								print(`⚪ Skipped "{name}" (missing required mutations)`)
 								continue
 							end
 
@@ -92,7 +97,7 @@ local function collectFruits()
 	print(`✔️ Fruit collection complete. Collected: {collected}, Skipped: {skipped}`)
 end
 
--- Create label header
+-- 🏷️ Header Label
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
@@ -105,7 +110,7 @@ local function createHeader(parent, text)
 	label.Parent = parent
 end
 
--- Create checkbox row
+-- ✅ Checkbox Creator
 local function createCheckbox(parent, labelText, callback)
 	local container = Instance.new("Frame")
 	container.Size = UDim2.new(1, 0, 0, 26)
@@ -140,7 +145,7 @@ local function createCheckbox(parent, labelText, callback)
 	end)
 end
 
--- 📋 UI Constructor
+-- 🧩 UI Setup
 return function(tab)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(1, 0, 1, -50)
@@ -174,11 +179,11 @@ return function(tab)
 		end)
 	end
 
-	createHeader(scroll, "❄️ Select Particles")
-	for _, particle in ipairs(particles) do
-		selectedParticles[particle] = false
-		createCheckbox(scroll, particle, function(state)
-			selectedParticles[particle] = state
+	createHeader(scroll, "🧬 Select Mutations")
+	for particle, displayName in pairs(mutations) do
+		selectedMutations[particle] = false
+		createCheckbox(scroll, displayName, function(state)
+			selectedMutations[particle] = state
 		end)
 	end
 
