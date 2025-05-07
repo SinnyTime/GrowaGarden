@@ -4,7 +4,9 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local SellAllEvent = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("Sell_Inventory")
+local GameEvents = ReplicatedStorage:WaitForChild("GameEvents")
+local SellAllEvent = GameEvents:WaitForChild("Sell_Inventory")
+local SELL_POSITION = Vector3.new(61, 3, 0)
 
 local BASE_URL = "https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/"
 local function import(name)
@@ -16,10 +18,15 @@ end
 
 local ItemData = import("ItemData")
 local crops = {}
-for _, name in ipairs(ItemData.Items.Fruits) do table.insert(crops, name) end
-for _, name in ipairs(ItemData.Items.PremiumFruits) do table.insert(crops, name) end
+for _, name in ipairs(ItemData.Items.Fruits) do
+	table.insert(crops, name)
+end
+for _, name in ipairs(ItemData.Items.PremiumFruits or {}) do
+	table.insert(crops, name)
+end
 
 local variants = { "Normal", "Gold", "Rainbow" }
+
 local mutationMap = {
 	FrozenParticle = "Frozen",
 	WetParticle = "Wet",
@@ -28,8 +35,9 @@ local mutationMap = {
 }
 
 local selectedCrops, selectedVariants, selectedMutations = {}, {}, {}
-local flyingBP, flyingGyro, noclipConn
+local allFruits, allVariants, allMutations = false, false, false
 local autoSellEnabled = false
+local flyingBP, flyingGyro, noclipConn
 
 local function enableFly()
 	local char = LocalPlayer.Character
@@ -86,6 +94,8 @@ local function disableFly()
 end
 
 local function hasBadMutations(fruit)
+	if allMutations then return false end
+
 	local found = {}
 	for _, descendant in ipairs(fruit:GetDescendants()) do
 		if mutationMap[descendant.Name] then
@@ -157,13 +167,13 @@ local function collectFruits()
 
 	for _, crop in ipairs(plants:GetChildren()) do
 		local cropName = crop.Name
-		if not selectedCrops[cropName] then continue end
+		if not allFruits and not selectedCrops[cropName] then continue end
 
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			local variantObj = fruit:FindFirstChild("Variant")
 			local variant = (variantObj and typeof(variantObj.Value) == "string" and variantObj.Value) or "Normal"
 
-			if not selectedVariants[variant] then continue end
+			if not allVariants and not selectedVariants[variant] then continue end
 			if hasBadMutations(fruit) then skipped += 1 continue end
 
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
@@ -192,6 +202,16 @@ local function collectFruits()
 				warn("⚠️ Could not collect:", cropName, fruit.Name)
 			end
 		end
+	end
+
+	if autoSellEnabled then
+		local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		local returnPos = root and root.Position
+		moveTo(SELL_POSITION)
+		task.wait(0.5)
+		SellAllEvent:FireServer()
+		task.wait(0.5)
+		if returnPos then moveTo(returnPos) end
 	end
 
 	if returnPos then
@@ -265,11 +285,7 @@ return function(tab)
 	end)
 
 	createHeader(scroll, "🌽 Select Crops")
-
-	createCheckbox(scroll, "✅ All Fruits", function(state)
-		for crop in pairs(selectedCrops) do selectedCrops[crop] = state end
-	end)
-
+	createCheckbox(scroll, "✅ All Fruits", function(state) allFruits = state end)
 	for _, crop in ipairs(crops) do
 		selectedCrops[crop] = false
 		createCheckbox(scroll, crop, function(state)
@@ -278,11 +294,7 @@ return function(tab)
 	end
 
 	createHeader(scroll, "✨ Select Variants")
-
-	createCheckbox(scroll, "✅ All Variants", function(state)
-		for variant in pairs(selectedVariants) do selectedVariants[variant] = state end
-	end)
-
+	createCheckbox(scroll, "✅ All Variants", function(state) allVariants = state end)
 	for _, variant in ipairs(variants) do
 		selectedVariants[variant] = false
 		createCheckbox(scroll, variant, function(state)
@@ -291,11 +303,7 @@ return function(tab)
 	end
 
 	createHeader(scroll, "❄️ Select Mutations")
-
-	createCheckbox(scroll, "✅ All Mutations", function(state)
-		for mutation in pairs(selectedMutations) do selectedMutations[mutation] = state end
-	end)
-
+	createCheckbox(scroll, "✅ All Mutations", function(state) allMutations = state end)
 	for particleName, displayName in pairs(mutationMap) do
 		selectedMutations[particleName] = false
 		createCheckbox(scroll, displayName, function(state)
@@ -320,28 +328,18 @@ return function(tab)
 
 	collectBtn.MouseButton1Click:Connect(collectFruits)
 
-	local autoSellBtn = Instance.new("TextButton", footer)
-	autoSellBtn.Size = UDim2.new(0, 160, 0, 36)
-	autoSellBtn.Position = UDim2.new(0.5, 10, 0.5, -18)
-	autoSellBtn.Text = "Auto Sell: OFF"
-	autoSellBtn.Font = Enum.Font.GothamBold
-	autoSellBtn.TextSize = 16
-	autoSellBtn.TextColor3 = Color3.new(1, 1, 1)
-	autoSellBtn.BackgroundColor3 = Color3.fromRGB(80, 160, 80)
-	Instance.new("UICorner", autoSellBtn).CornerRadius = UDim.new(0, 6)
+	local toggle = Instance.new("TextButton", footer)
+	toggle.Size = UDim2.new(0, 140, 0, 36)
+	toggle.Position = UDim2.new(0.5, 30, 0.5, -18)
+	toggle.Text = "Auto Sell: OFF"
+	toggle.Font = Enum.Font.GothamBold
+	toggle.TextSize = 16
+	toggle.TextColor3 = Color3.new(1, 1, 1)
+	toggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 6)
 
-	autoSellBtn.MouseButton1Click:Connect(function()
+	toggle.MouseButton1Click:Connect(function()
 		autoSellEnabled = not autoSellEnabled
-		autoSellBtn.Text = autoSellEnabled and "Auto Sell: ON" or "Auto Sell: OFF"
-	end)
-
-	task.spawn(function()
-		while true do
-			task.wait(10)
-			if autoSellEnabled then
-				print("💰 Auto-selling inventory...")
-				SellAllEvent:FireServer()
-			end
-		end
+		toggle.Text = autoSellEnabled and "Auto Sell: ON" or "Auto Sell: OFF"
 	end)
 end
