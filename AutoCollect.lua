@@ -84,6 +84,8 @@ local function getFruitParts(crop)
 	return parts
 end
 
+local UserInputService = game:GetService("UserInputService")
+
 local function collectFruits()
 	print("🌾 Beginning fruit collection...")
 	local collected, skipped = 0, 0
@@ -118,44 +120,51 @@ local function collectFruits()
 		return
 	end
 
+	local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not rootPart then
+		warn("❌ Could not find HumanoidRootPart.")
+		return
+	end
+
 	for _, crop in ipairs(plants:GetChildren()) do
-		local cropName = crop.Name
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			if not (fruit:IsA("Model") or fruit:IsA("Part")) then continue end
 
-			-- Determine the actual crop name
+			local cropName = crop.Name
 			local name = crop:FindFirstChild("Fruits") and fruit.Name or cropName
-			if not table.find(crops, name) then
-				if not seenUnmatchedFruits[name] then
-					seenUnmatchedFruits[name] = true
-					print("👀 Unmatched fruit seen in farm:", name)
-				end
-				continue
-			end
+
+			if not selectedCrops[cropName] then continue end
 
 			local variant = fruit:GetAttribute("Variant") or "Normal"
-			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
+			if not selectedVariants[variant] then continue end
 
-			local reason = getReasonSkipped(fruit, crop.Name)
-			if reason then
-				print("⏭️ Skipped:", name, "-", reason)
-				skipped += 1
-				continue
+			local match = true
+			for particle, required in pairs(selectedParticles) do
+				if required and not deepFindParticle(fruit, particle) then
+					match = false
+					break
+				end
 			end
 
+			if not match then continue end
+
+			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 			if prompt then
-				local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-				if rootPart then
-					local originalParent = prompt.Parent
-					prompt.Parent = rootPart -- temporarily attach to player to fake proximity
-					task.wait(0.15)
-					fireproximityprompt(prompt)
-					task.wait(0.05)
-					prompt.Parent = originalParent
-				end
+				local originalParent = prompt.Parent
+				prompt.Parent = rootPart
+				task.wait(0.25)
+
+				-- Simulate pressing "E"
+				UserInputService.InputBegan:Fire({
+					UserInputType = Enum.UserInputType.Keyboard,
+					KeyCode = Enum.KeyCode.E
+				}, false)
+
 				collected += 1
+				task.wait(0.25)
+				prompt.Parent = originalParent
 			else
-				print("❌ No ProximityPrompt for", name)
+				print("❌ No ProximityPrompt for", cropName)
 				skipped += 1
 			end
 		end
