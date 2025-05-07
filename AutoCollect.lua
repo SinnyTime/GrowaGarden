@@ -16,38 +16,46 @@ local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
 
 local selectedCrops, selectedVariants = {}, {}
+local flyingBP, flyingGyro
 
+-- Stable flying system
 local function enableFly()
-	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	local char = LocalPlayer.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
-	local bp = Instance.new("BodyPosition")
-	bp.Name = "FlyBP"
-	bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-	bp.Position = root.Position
-	bp.Parent = root
+
+	flyingBP = Instance.new("BodyPosition")
+	flyingBP.Name = "FlyBP"
+	flyingBP.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+	flyingBP.D = 1500
+	flyingBP.P = 50000
+	flyingBP.Position = root.Position
+	flyingBP.Parent = root
+
+	flyingGyro = Instance.new("BodyGyro")
+	flyingGyro.Name = "FlyGyro"
+	flyingGyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+	flyingGyro.D = 500
+	flyingGyro.P = 3000
+	flyingGyro.CFrame = root.CFrame
+	flyingGyro.Parent = root
+
 	LocalPlayer.Character:SetAttribute("NoclipActive", true)
-	RunService.Stepped:Connect(function()
-		if LocalPlayer.Character:GetAttribute("NoclipActive") then
-			for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-				if part:IsA("BasePart") then part.CanCollide = false end
-			end
-		end
-	end)
 end
 
 local function moveTo(pos)
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if root then
-		local bp = root:FindFirstChild("FlyBP")
-		if bp then bp.Position = pos end
+	if root and flyingBP and flyingGyro then
+		flyingBP.Position = pos
+		flyingGyro.CFrame = CFrame.new(pos)
 	end
 end
 
 local function disableFly()
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if root then
-		local bp = root:FindFirstChild("FlyBP")
-		if bp then bp:Destroy() end
+		if flyingBP then flyingBP:Destroy() flyingBP = nil end
+		if flyingGyro then flyingGyro:Destroy() flyingGyro = nil end
 	end
 	LocalPlayer.Character:SetAttribute("NoclipActive", false)
 	for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
@@ -64,9 +72,9 @@ local function getFruitParts(crop)
 			end
 		end
 	else
-		for _, child in ipairs(crop:GetChildren()) do
-			if tonumber(child.Name) and (child:IsA("Model") or child:IsA("Part")) then
-				table.insert(fruits, child)
+		for _, obj in ipairs(crop:GetChildren()) do
+			if tonumber(obj.Name) and (obj:IsA("Model") or obj:IsA("Part")) then
+				table.insert(fruits, obj)
 			end
 		end
 	end
