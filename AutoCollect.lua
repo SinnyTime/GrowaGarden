@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
 local BASE_URL = "https://raw.githubusercontent.com/SinnyTime/GrowaGarden/main/"
 local function import(name)
@@ -17,7 +18,6 @@ local variants = { "Normal", "Gold", "Rainbow" }
 
 local selectedCrops = {}
 local selectedVariants = {}
-local seenUnmatchedFruits = {}
 
 local function getFruitParts(crop)
 	local parts = {}
@@ -35,6 +35,54 @@ local function getFruitParts(crop)
 		end
 	end
 	return parts
+end
+
+-- Fly & noclip control
+local function enableFly()
+	local bp = Instance.new("BodyPosition")
+	bp.Name = "FlyBP"
+	bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+	bp.Position = LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 10, 0)
+	bp.Parent = LocalPlayer.Character.HumanoidRootPart
+
+	LocalPlayer.Character:SetAttribute("NoclipActive", true)
+	RunService.Stepped:Connect(function()
+		if LocalPlayer.Character:GetAttribute("NoclipActive") then
+			for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
+	end)
+end
+
+local function updateFly(pos)
+	local bp = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FlyBP")
+	if bp then
+		bp.Position = pos + Vector3.new(0, 5, 0)
+	end
+end
+
+local function disableNoclip()
+	LocalPlayer.Character:SetAttribute("NoclipActive", false)
+	for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = true
+		end
+	end
+end
+
+local function disableFly()
+	local bp = LocalPlayer.Character.HumanoidRootPart:FindFirstChild("FlyBP")
+	if bp then bp:Destroy() end
+end
+
+local function lookAt(part)
+	local root = LocalPlayer.Character.HumanoidRootPart
+	local eye = root.Position + Vector3.new(0, 1.5, 0)
+	root.CFrame = CFrame.lookAt(eye, part.Position)
+	Workspace.CurrentCamera.CFrame = CFrame.new(Workspace.CurrentCamera.CFrame.Position, part.Position)
 end
 
 local function collectFruits()
@@ -59,11 +107,12 @@ local function collectFruits()
 
 	if not playerFarm then warn("❌ Could not find your farm.") return end
 
-	local plants = playerFarm:FindFirstChild("Important") and playerFarm.Important:FindFirstChild("Plants_Physical")
-	if not plants then warn("❌ No 'Plants_Physical' folder found in your farm.") return end
+	local plants = playerFarm.Important:FindFirstChild("Plants_Physical")
+	if not plants then warn("❌ No 'Plants_Physical' found.") return end
 
-	local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not rootPart then warn("❌ Could not find HumanoidRootPart.") return end
+	local returnPos = playerFarm:FindFirstChild("Sign") and playerFarm.Sign:FindFirstChild("Core_Part") and playerFarm.Sign.Core_Part.Position + Vector3.new(0, 10, 0)
+
+	enableFly()
 
 	for _, crop in ipairs(plants:GetChildren()) do
 		for _, fruit in ipairs(getFruitParts(crop)) do
@@ -77,31 +126,49 @@ local function collectFruits()
 			if not selectedVariants[variant] then continue end
 
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
-			if prompt then
-				local originalParent = prompt.Parent
-				prompt.Parent = rootPart
-				task.wait(0.1)
+			local part = fruit:FindFirstChildWhichIsA("BasePart", true)
 
-				pcall(function()
-					prompt:InputHoldBegin(Enum.UserInputType.Keyboard)
-					task.wait(prompt.HoldDuration or 0.5)
-					prompt:InputHoldEnd(Enum.UserInputType.Keyboard)
+			if prompt and part then
+				prompt.MaxActivationDistance = 9999
+				prompt.RequiresLineOfSight = false
+				prompt.HoldDuration = 0
+
+				updateFly(part.Position)
+				task.wait(0.4)
+				lookAt(part)
+				task.wait(0.4)
+
+				local success = pcall(function()
+					fireproximityprompt(prompt)
 				end)
 
-				collected += 1
-				task.wait(0.25)
-				prompt.Parent = originalParent
+				if success then
+					collected += 1
+				else
+					warn("⚠️ Failed to collect", name)
+					skipped += 1
+				end
+
+				task.wait(0.3)
 			else
-				print("❌ No ProximityPrompt for", cropName)
 				skipped += 1
 			end
 		end
 	end
 
-	if collected == 0 then warn("⚠️ No fruits were collected. Double-check your filters!") end
+	if returnPos then
+		updateFly(returnPos)
+		task.wait(0.6)
+	end
+
+	disableNoclip()
+	task.wait(0.2)
+	disableFly()
+
 	print(`✅ Fruit collection complete. Collected: {collected}, Skipped: {skipped}`)
 end
 
+-- UI setup
 local function createHeader(parent, text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 26)
