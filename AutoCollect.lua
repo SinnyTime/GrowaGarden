@@ -35,7 +35,7 @@ local function collectFruits()
 	for _, farm in pairs(Workspace:GetChildren()) do
 		if farm:IsA("Folder") and farm.Name == "Farm" then
 			local ownerVa = farm:FindFirstChild("Owner")
-			if ownerVal and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
+			if ownerVa and ownerVal:IsA("StringValue") and ownerVal.Value == LocalPlayer.Name then
 				local plants = farm:FindFirstChild("Plants_Physical")
 				if plants then
 					for _, crop in pairs(plants:GetChildren()) do
