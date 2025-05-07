@@ -40,25 +40,23 @@ local selectedMutations = {}
 -- Parse tool name
 local function parseToolName(toolName)
 	local mutations = {}
+	local variant = "Normal"
 	local name = toolName
 
-	-- Extract bracketed mutations like [Wet, Shocked]
+	-- Extract bracket content like [Wet, Shocked, Gold]
 	local mutationString = name:match("%[(.-)%]")
 	if mutationString then
-		for mutation in mutationString:gmatch("[^,%s]+") do
-			table.insert(mutations, mutation)
+		for entry in mutationString:gmatch("[^,%s]+") do
+			if entry == "Gold" or entry == "Rainbow" then
+				variant = entry
+			else
+				table.insert(mutations, entry)
+			end
 		end
-		-- Remove the entire [ ... ] from the name
-		name = name:gsub("%[.-%]%s*", "")
+		name = name:gsub("%[.-%]%s*", "") -- remove [ ... ] from name
 	end
 
-	local variant = "Normal"
-	if name:find("Gold") then
-		variant = "Gold"
-	elseif name:find("Rainbow") then
-		variant = "Rainbow"
-	end
-
+	-- Identify fruit name from known list
 	for _, fruitName in ipairs(fruits) do
 		if name:find(fruitName) then
 			return fruitName, variant, mutations
