@@ -79,13 +79,11 @@ local function isToolValid(tool)
 
 	-- Skip if not recognized
 	if not fruitName then
-		print("❌ Skipped: Not a recognized fruit.")
 		return false
 	end
 
 	-- Skip if name includes "Seed"
 	if tool.Name:lower():find("seed") then
-		print("❌ Skipped: Seed detected.")
 		return false
 	end
 
