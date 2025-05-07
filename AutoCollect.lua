@@ -116,17 +116,20 @@ local function collectFruits()
 	end
 
 	for _, crop in ipairs(plants:GetChildren()) do
+		local cropName = crop.Name
 		for _, fruit in ipairs(getFruitParts(crop)) do
 			if not (fruit:IsA("Model") or fruit:IsA("Part")) then continue end
-			if not table.find(crops, fruit.Name) then
-				if not seenUnmatchedFruits[fruit.Name] then
-					seenUnmatchedFruits[fruit.Name] = true
-					print("👀 Unmatched fruit seen in farm:", fruit.Name)
+
+			-- Determine the actual crop name
+			local name = crop:FindFirstChild("Fruits") and fruit.Name or cropName
+			if not table.find(crops, name) then
+				if not seenUnmatchedFruits[name] then
+					seenUnmatchedFruits[name] = true
+					print("👀 Unmatched fruit seen in farm:", name)
 				end
 				continue
 			end
 
-			local name = fruit.Name
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 
@@ -138,13 +141,19 @@ local function collectFruits()
 			end
 
 			if prompt then
-				fireproximityprompt(prompt)
-				collected += 1
-				task.wait(0.1)
-			else
-				print("❌ No ProximityPrompt for", name)
-				skipped += 1
-			end
+	local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if rootPart then
+		rootPart.CFrame = CFrame.new(prompt.Parent.Position + Vector3.new(0, 2, 0))
+		task.wait(0.15)
+	end
+	fireproximityprompt(prompt)
+	collected += 1
+	task.wait(0.1)
+else
+	print("❌ No ProximityPrompt for", name)
+	skipped += 1
+end
+
 		end
 	end
 
