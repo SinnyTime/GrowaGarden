@@ -1,192 +1,198 @@
-local SellTab = {}
+-- SellTab.lua
 
 local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterGui = game:GetService("StarterGui")
 
-local player = Players.LocalPlayer
-local backpack = player:WaitForChild("Backpack")
-local PlayerGui = player:WaitForChild("PlayerGui")
+-- RemoteEvents
+local SellEvent = ReplicatedStorage:WaitForChild("SellItem")
+local EquipEvent = ReplicatedStorage:WaitForChild("EquipItem")
 
-local GameEvents = ReplicatedStorage:WaitForChild("GameEvents")
-local SellItem = GameEvents:WaitForChild("Sell_Item")
-local SellInventory = GameEvents:WaitForChild("Sell_Inventory")
+-- Configuration
+local SELL_POSITION = Vector3.new(61, 3, 0)
+local RETURN_DELAY = 0.5
 
--- ✅ Complete fruit list
-local cropOptions = {
+-- Fruit List
+local fruits = {
 	"Carrot", "Strawberry", "Blueberry", "Orange Tulip", "Tomato", "Corn",
 	"Daffodil", "Watermelon", "Pumpkin", "Apple", "Bamboo", "Coconut",
 	"Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper",
 	"Raspberry", "Cranberry", "Durian", "Eggplant", "Lotus"
 }
 
--- Mutation list
-local mutationOptions = {
-	"Gold", "Rainbow", "Wet", "Frozen", "Chilled", "Shocked"
+-- Mutation Mapping
+local mutationMap = {
+	FrozenParticle = "Frozen",
+	WetParticle = "Wet",
+	ChilledParticle = "Chilled",
+	ShockedParticle = "Shocked"
 }
 
--- Sell zone teleport position
-local SELL_POSITION = Vector3.new(61, 3, 0)
-
--- State tables
-local selectedCrops = {}
+-- UI Elements
+local selectedFruits = {}
 local selectedMutations = {}
 
--- 🧠 Extract mutations from tool name
-local function extractMutations(toolName)
-	local mutations = {}
-	local prefix = toolName:match("^%[(.-)%]")
-	if prefix then
-		for mutation in prefix:gmatch("[^,%s]+") do
-			table.insert(mutations, mutation)
+-- Utility Functions
+local function hasBadMutations(item)
+	for particleName in pairs(mutationMap) do
+		if item:FindFirstChild(particleName) and not selectedMutations[particleName] then
+			return true
 		end
 	end
-	return mutations
+	return false
 end
 
--- ✅ Tool filter match
-local function isValidTool(tool)
-	if not tool:IsA("Tool") then return false end
-
-	local name = tool.Name
-	local cleanName = name:match(".*%] (.-) %[%d") or name:match("^(.-) %[%d") or name
-
-	if not selectedCrops[cleanName] then return false end
-
-	local mutations = extractMutations(name)
-	for required in pairs(selectedMutations) do
-		local found = false
-		for _, m in ipairs(mutations) do
-			if m == required then
-				found = true
-				break
-			end
-		end
-		if not found then return false end
-	end
-
-	return true
-end
-
--- 🚀 Teleport
 local function teleportTo(position)
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	if root then
-		root.CFrame = CFrame.new(position)
+	local character = LocalPlayer.Character
+	if character and character:FindFirstChild("HumanoidRootPart") then
+		character:MoveTo(position)
 	end
 end
 
--- 🔘 Sell Inventory
-function SellTab.SellAll()
-	local originalPos = player.Character and player.Character:FindFirstChild("HumanoidRootPart").Position
-	teleportTo(SELL_POSITION)
-	task.wait(0.3)
-	SellInventory:FireServer()
-	task.wait(0.2)
-	teleportTo(originalPos)
-end
-
--- 🔘 Sell Selected
-function SellTab.SellSelected()
-	local originalPos = player.Character and player.Character:FindFirstChild("HumanoidRootPart").Position
-	teleportTo(SELL_POSITION)
-	task.wait(0.2)
-
-	for _, tool in ipairs(backpack:GetChildren()) do
-		if isValidTool(tool) then
-			player.Character.Humanoid:EquipTool(tool)
-			task.wait(0.15)
-			SellItem:FireServer(tool)
-			task.wait(0.15)
+local function getInventoryItems()
+	local backpack = LocalPlayer:WaitForChild("Backpack")
+	local inventoryItems = {}
+	for _, item in ipairs(backpack:GetChildren()) do
+		if table.find(fruits, item.Name) and selectedFruits[item.Name] and not hasBadMutations(item) then
+			table.insert(inventoryItems, item)
 		end
 	end
-
-	task.wait(0.2)
-	teleportTo(originalPos)
+	return inventoryItems
 end
 
--- 🧩 UI bindings
-function SellTab.SetCropSelected(crop, state)
-	selectedCrops[crop] = state or nil
+local function sellItems(items)
+	local originalPosition = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position
+	if not originalPosition then return end
+
+	teleportTo(SELL_POSITION)
+	task.wait(RETURN_DELAY)
+
+	for _, item in ipairs(items) do
+		EquipEvent:FireServer(item.Name)
+		task.wait(0.1)
+		SellEvent:FireServer(item.Name)
+		task.wait(0.1)
+	end
+
+	task.wait(RETURN_DELAY)
+	teleportTo(originalPosition)
 end
 
-function SellTab.SetMutationSelected(mutation, state)
-	selectedMutations[mutation] = state or nil
-end
+-- UI Construction
+return function(tab)
+	local scroll = Instance.new("ScrollingFrame")
+	scroll.Size = UDim2.new(1, 0, 1, -50)
+	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	scroll.ScrollBarThickness = 6
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
+	scroll.Parent = tab
 
--- 🧱 UI Builder Function
-function SellTab.BuildUI(frame)
-	local UIListLayout = Instance.new("UIListLayout")
-	UIListLayout.Padding = UDim.new(0, 4)
-	UIListLayout.Parent = frame
+	local layout = Instance.new("UIListLayout", scroll)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 4)
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+	end)
 
-	local function makeCheckbox(text, callback)
-		local button = Instance.new("TextButton")
-		button.Size = UDim2.new(1, 0, 0, 28)
-		button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-		button.TextColor3 = Color3.new(1, 1, 1)
-		button.Text = "[ ] " .. text
-		button.Font = Enum.Font.Gotham
-		button.TextSize = 14
+	local function createHeader(text)
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(1, 0, 0, 26)
+		label.Text = text
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.Font = Enum.Font.GothamBold
+		label.TextSize = 16
+		label.BackgroundTransparency = 1
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = scroll
+	end
 
-		local selected = false
-		button.MouseButton1Click:Connect(function()
-			selected = not selected
-			button.Text = selected and "[✔] " .. text or "[ ] " .. text
-			callback(text, selected)
+	local function createCheckbox(labelText, callback)
+		local container = Instance.new("Frame")
+		container.Size = UDim2.new(1, 0, 0, 26)
+		container.BackgroundTransparency = 1
+		container.Parent = scroll
+
+		local box = Instance.new("TextButton", container)
+		box.Size = UDim2.new(0, 26, 1, 0)
+		box.Text = "☐"
+		box.Font = Enum.Font.Gotham
+		box.TextSize = 16
+		box.TextColor3 = Color3.new(1, 1, 1)
+		box.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		Instance.new("UICorner", box).CornerRadius = UDim.new(0, 4)
+
+		local label = Instance.new("TextLabel", container)
+		label.Size = UDim2.new(1, -34, 1, 0)
+		label.Position = UDim2.new(0, 34, 0, 0)
+		label.Text = labelText
+		label.Font = Enum.Font.Gotham
+		label.TextSize = 15
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.BackgroundTransparency = 1
+		label.TextXAlignment = Enum.TextXAlignment.Left
+
+		local checked = false
+		box.MouseButton1Click:Connect(function()
+			checked = not checked
+			box.Text = checked and "☑" or "☐"
+			callback(checked)
 		end)
-
-		button.Parent = frame
 	end
 
-	-- 🍓 Fruit checkboxes
-	local cropLabel = Instance.new("TextLabel")
-	cropLabel.Text = "Select Crops to Sell"
-	cropLabel.Size = UDim2.new(1, 0, 0, 24)
-	cropLabel.BackgroundTransparency = 1
-	cropLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	cropLabel.Font = Enum.Font.GothamBold
-	cropLabel.TextSize = 16
-	cropLabel.Parent = frame
-
-	for _, crop in ipairs(cropOptions) do
-		makeCheckbox(crop, SellTab.SetCropSelected)
+	-- Populate Fruit Checkboxes
+	createHeader("🍓 Select Fruits")
+	for _, fruit in ipairs(fruits) do
+		selectedFruits[fruit] = false
+		createCheckbox(fruit, function(state)
+			selectedFruits[fruit] = state
+		end)
 	end
 
-	-- 🌈 Mutation toggles
-	local mutationLabel = Instance.new("TextLabel")
-	mutationLabel.Text = "Select Required Mutations"
-	mutationLabel.Size = UDim2.new(1, 0, 0, 24)
-	mutationLabel.BackgroundTransparency = 1
-	mutationLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	mutationLabel.Font = Enum.Font.GothamBold
-	mutationLabel.TextSize = 16
-	mutationLabel.Parent = frame
-
-	for _, mutation in ipairs(mutationOptions) do
-		makeCheckbox(mutation, SellTab.SetMutationSelected)
+	-- Populate Mutation Checkboxes
+	createHeader("🧬 Select Mutations")
+	for particleName, displayName in pairs(mutationMap) do
+		selectedMutations[particleName] = false
+		createCheckbox(displayName, function(state)
+			selectedMutations[particleName] = state
+		end)
 	end
 
-	-- 🎯 Sell Buttons
-	local buttonSellSelected = Instance.new("TextButton")
-	buttonSellSelected.Size = UDim2.new(1, 0, 0, 36)
-	buttonSellSelected.BackgroundColor3 = Color3.fromRGB(70, 120, 70)
-	buttonSellSelected.TextColor3 = Color3.new(1, 1, 1)
-	buttonSellSelected.Text = "Sell Selected"
-	buttonSellSelected.Font = Enum.Font.GothamBold
-	buttonSellSelected.TextSize = 16
-	buttonSellSelected.Parent = frame
-	buttonSellSelected.MouseButton1Click:Connect(SellTab.SellSelected)
+	-- Footer Buttons
+	local footer = Instance.new("Frame", tab)
+	footer.Size = UDim2.new(1, 0, 0, 50)
+	footer.Position = UDim2.new(0, 0, 1, -50)
+	footer.BackgroundTransparency = 1
 
-	local buttonSellAll = Instance.new("TextButton")
-	buttonSellAll.Size = UDim2.new(1, 0, 0, 36)
-	buttonSellAll.BackgroundColor3 = Color3.fromRGB(120, 70, 70)
-	buttonSellAll.TextColor3 = Color3.new(1, 1, 1)
-	buttonSellAll.Text = "Sell Entire Inventory"
-	buttonSellAll.Font = Enum.Font.GothamBold
-	buttonSellAll.TextSize = 16
-	buttonSellAll.Parent = frame
-	buttonSellAll.MouseButton1Click:Connect(SellTab.SellAll)
+	local sellInventoryButton = Instance.new("TextButton", footer)
+	sellInventoryButton.Size = UDim2.new(0, 160, 0, 36)
+	sellInventoryButton.Position = UDim2.new(0.5, -170, 0.5, -18)
+	sellInventoryButton.Text = "Sell Inventory"
+	sellInventoryButton.Font = Enum.Font.GothamBold
+	sellInventoryButton.TextSize = 16
+	sellInventoryButton.TextColor3 = Color3.new(1, 1, 1)
+	sellInventoryButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
+	Instance.new("UICorner", sellInventoryButton).CornerRadius = UDim.new(0, 6)
+
+	local sellSelectedButton = Instance.new("TextButton", footer)
+	sellSelectedButton.Size = UDim2.new(0, 160, 0, 36)
+	sellSelectedButton.Position = UDim2.new(0.5, 10, 0.5, -18)
+	sellSelectedButton.Text = "Sell Selected"
+	sellSelectedButton.Font = Enum.Font.GothamBold
+	sellSelectedButton.TextSize = 16
+	sellSelectedButton.TextColor3 = Color3.new(1, 1, 1)
+	sellSelectedButton.BackgroundColor3 = Color3.fromRGB(40, 100, 255)
+	Instance.new("UICorner", sellSelectedButton).CornerRadius = UDim.new(0, 6)
+
+	sellInventoryButton.MouseButton1Click:Connect(function()
+		local items = getInventoryItems()
+		sellItems(items)
+	end)
+
+	sellSelectedButton.MouseButton1Click:Connect(function()
+		local items = getInventoryItems()
+		sellItems(items)
+	end)
 end
-
-return SellTab
