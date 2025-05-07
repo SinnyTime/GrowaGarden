@@ -15,56 +15,9 @@ local ItemData = import("ItemData")
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
 
-local mutationMap = {
-	FrozenParticle = "Frozen",
-	WetParticle = "Wet",
-	ChilledParticle = "Chilled",
-	ShockedParticle = "Shocked"
-}
-local particles = {}
-for particle in pairs(mutationMap) do table.insert(particles, particle) end
-
 local selectedCrops = {}
 local selectedVariants = {}
-local selectedParticles = {}
 local seenUnmatchedFruits = {}
-
-local function deepFindParticle(fruit, particleName)
-	for _, descendant in ipairs(fruit:GetDescendants()) do
-		if descendant.Name == particleName then
-			return true
-		end
-	end
-	return false
-end
-
-local function hasRequiredParticles(fruit)
-	for particle, enabled in pairs(selectedParticles) do
-		if enabled and not deepFindParticle(fruit, particle) then
-			return false
-		end
-	end
-	return true
-end
-
-local function getReasonSkipped(fruit, cropName)
-	if not selectedCrops[cropName] then
-		return "❌ Crop not selected: " .. cropName
-	end
-
-	local variant = fruit:GetAttribute("Variant") or "Normal"
-	if not selectedVariants[variant] then
-		return "❌ Variant not selected: " .. variant
-	end
-
-	for particle, required in pairs(selectedParticles) do
-		if required and not deepFindParticle(fruit, particle) then
-			return "❌ Missing mutation: " .. mutationMap[particle]
-		end
-	end
-
-	return nil
-end
 
 local function getFruitParts(crop)
 	local parts = {}
@@ -84,17 +37,12 @@ local function getFruitParts(crop)
 	return parts
 end
 
-local UserInputService = game:GetService("UserInputService")
-
 local function collectFruits()
 	print("🌾 Beginning fruit collection...")
 	local collected, skipped = 0, 0
 
 	local root = Workspace:FindFirstChild("Farm")
-	if not root then
-		warn("❌ No 'Farm' folder found in Workspace.")
-		return
-	end
+	if not root then warn("❌ No 'Farm' folder found in Workspace.") return end
 
 	local playerFarm
 	for _, farm in ipairs(root:GetChildren()) do
@@ -109,22 +57,13 @@ local function collectFruits()
 		end
 	end
 
-	if not playerFarm then
-		warn("❌ Could not find your farm.")
-		return
-	end
+	if not playerFarm then warn("❌ Could not find your farm.") return end
 
 	local plants = playerFarm:FindFirstChild("Important") and playerFarm.Important:FindFirstChild("Plants_Physical")
-	if not plants then
-		warn("❌ No 'Plants_Physical' folder found in your farm.")
-		return
-	end
+	if not plants then warn("❌ No 'Plants_Physical' folder found in your farm.") return end
 
 	local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if not rootPart then
-		warn("❌ Could not find HumanoidRootPart.")
-		return
-	end
+	if not rootPart then warn("❌ Could not find HumanoidRootPart.") return end
 
 	for _, crop in ipairs(plants:GetChildren()) do
 		for _, fruit in ipairs(getFruitParts(crop)) do
@@ -132,35 +71,23 @@ local function collectFruits()
 
 			local cropName = crop.Name
 			local name = crop:FindFirstChild("Fruits") and fruit.Name or cropName
-
 			if not selectedCrops[cropName] then continue end
 
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			if not selectedVariants[variant] then continue end
-
-			local match = true
-			for particle, required in pairs(selectedParticles) do
-				if required and not deepFindParticle(fruit, particle) then
-					match = false
-					break
-				end
-			end
-
-			if not match then continue end
 
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 			if prompt then
 				local originalParent = prompt.Parent
 				prompt.Parent = rootPart
 				task.wait(0.1)
-			
-				-- Simulate holding "E"
+
 				pcall(function()
 					prompt:InputHoldBegin(Enum.UserInputType.Keyboard)
 					task.wait(prompt.HoldDuration or 0.5)
 					prompt:InputHoldEnd(Enum.UserInputType.Keyboard)
 				end)
-			
+
 				collected += 1
 				task.wait(0.25)
 				prompt.Parent = originalParent
@@ -168,7 +95,6 @@ local function collectFruits()
 				print("❌ No ProximityPrompt for", cropName)
 				skipped += 1
 			end
-
 		end
 	end
 
@@ -252,14 +178,6 @@ return function(tab)
 		selectedVariants[variant] = false
 		createCheckbox(scroll, variant, function(state)
 			selectedVariants[variant] = state
-		end)
-	end
-
-	createHeader(scroll, "🧬 Select Mutations")
-	for _, particle in ipairs(particles) do
-		selectedParticles[particle] = false
-		createCheckbox(scroll, mutationMap[particle], function(state)
-			selectedParticles[particle] = state
 		end)
 	end
 
