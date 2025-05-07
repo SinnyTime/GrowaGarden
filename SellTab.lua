@@ -42,7 +42,7 @@ local function parseToolName(toolName)
 	local mutations = {}
 	local fruitNameFound = nil
 
-	-- Identify fruit in name
+	-- Identify fruit name
 	for _, fruit in ipairs(fruits) do
 		local startIdx = toolName:find(fruit)
 		if startIdx then
@@ -50,27 +50,25 @@ local function parseToolName(toolName)
 			break
 		end
 	end
-
 	if not fruitNameFound then
-		return nil, "Normal", {} -- not a recognized fruit
+		return nil, "Normal", {}
 	end
 
-	-- Extract everything before the fruit name
 	local prefix = toolName:split(fruitNameFound)[1]
 
-	-- Grab valid mutations in prefix
+	-- Determine variant
+	local variant = "Normal"
+	if prefix:find("Gold") then
+		variant = "Gold"
+	elseif prefix:find("Rainbow") then
+		variant = "Rainbow"
+	end
+
+	-- Grab valid mutations (excluding Gold/Rainbow)
 	for mutation in pairs(mutationMap) do
 		if prefix:find("%[" .. mutation .. "%]") then
 			table.insert(mutations, mutation)
 		end
-	end
-
-	-- Determine variant
-	local variant = "Normal"
-	if table.find(mutations, "Gold") then
-		variant = "Gold"
-	elseif table.find(mutations, "Rainbow") then
-		variant = "Rainbow"
 	end
 
 	return fruitNameFound, variant, mutations
