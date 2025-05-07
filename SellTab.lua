@@ -42,11 +42,14 @@ local function parseToolName(toolName)
 	local mutations = {}
 	local name = toolName
 
-	for mutation in pairs(mutationMap) do
-		if name:find("%[" .. mutation .. "%]") then
+	-- Extract bracketed mutations like [Wet, Shocked]
+	local mutationString = name:match("%[(.-)%]")
+	if mutationString then
+		for mutation in mutationString:gmatch("[^,%s]+") do
 			table.insert(mutations, mutation)
-			name = name:gsub("%[" .. mutation .. "%]%s*", "")
 		end
+		-- Remove the entire [ ... ] from the name
+		name = name:gsub("%[.-%]%s*", "")
 	end
 
 	local variant = "Normal"
