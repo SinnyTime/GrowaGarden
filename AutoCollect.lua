@@ -112,8 +112,10 @@ local function collectFruits()
 	if not selectedCrops[cropName] then continue end
 
 		for _, fruit in ipairs(getFruitParts(crop)) do
-			local variant = fruit:GetAttribute("Variant") or "Normal"
-			if not selectedVariants[variant] then continue end
+			local variant = fruit:GetAttribute("Variant")
+			if not variant or not selectedVariants[variant] then
+				continue
+			end
 	
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 			local targetPart = fruit:IsA("Model") and fruit:FindFirstChildWhichIsA("BasePart") or fruit
