@@ -1,4 +1,3 @@
--- FULL SCRIPT BELOW (with mutation handling)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Workspace = game:GetService("Workspace")
@@ -15,11 +14,12 @@ end
 local ItemData = import("ItemData")
 local crops = ItemData.Items.Fruits
 local variants = { "Normal", "Gold", "Rainbow" }
-local mutationTypes = {
-	"FrozenParticle",
-	"WetParticle",
-	"ChilledParticle",
-	"ShockedParticle"
+
+local mutationMap = {
+	FrozenParticle = "Frozen",
+	WetParticle = "Wet",
+	ChilledParticle = "Chilled",
+	ShockedParticle = "Shocked"
 }
 
 local selectedCrops, selectedVariants, selectedMutations = {}, {}, {}
@@ -80,10 +80,10 @@ local function disableFly()
 end
 
 local function hasBadMutations(fruit)
-	for _, mut in ipairs(mutationTypes) do
+	for mutation in pairs(mutationMap) do
 		for _, descendant in ipairs(fruit:GetDescendants()) do
-			if descendant.Name == mut then
-				if not selectedMutations[mut] then
+			if descendant.Name == mutation then
+				if not selectedMutations[mutation] then
 					return true
 				end
 			end
@@ -91,7 +91,6 @@ local function hasBadMutations(fruit)
 	end
 	return false
 end
-
 
 local function getFruitParts(crop)
 	local fruits = {}
@@ -260,10 +259,10 @@ return function(tab)
 	end
 
 	createHeader(scroll, "❄️ Select Mutations")
-	for _, mut in ipairs(mutationTypes) do
-		selectedMutations[mut] = false
-		createCheckbox(scroll, mut, function(state)
-			selectedMutations[mut] = state
+	for particleName, displayName in pairs(mutationMap) do
+		selectedMutations[particleName] = false
+		createCheckbox(scroll, displayName, function(state)
+			selectedMutations[particleName] = state
 		end)
 	end
 
