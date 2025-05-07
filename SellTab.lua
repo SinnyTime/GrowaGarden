@@ -49,9 +49,12 @@ local function hasBadMutations(item)
 end
 
 local function matchesVariant(tool)
+	local variant = "Normal"
 	local variantObj = tool:FindFirstChild("Variant")
-	local variant = (variantObj and typeof(variantObj.Value) == "string" and variantObj.Value) or "Normal"
-	return selectedVariants[variant]
+	if variantObj and typeof(variantObj.Value) == "string" then
+		variant = variantObj.Value
+	end
+	return selectedVariants[variant] == true
 end
 
 local function teleportTo(position)
