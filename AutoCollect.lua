@@ -81,12 +81,17 @@ end
 
 local function hasBadMutations(fruit)
 	for _, mut in ipairs(mutationTypes) do
-		if fruit:FindFirstChild(mut, true) and not selectedMutations[mut] then
-			return true
+		for _, descendant in ipairs(fruit:GetDescendants()) do
+			if descendant.Name == mut then
+				if not selectedMutations[mut] then
+					return true
+				end
+			end
 		end
 	end
 	return false
 end
+
 
 local function getFruitParts(crop)
 	local fruits = {}
