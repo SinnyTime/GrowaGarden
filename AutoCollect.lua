@@ -47,9 +47,9 @@ local function hasRequiredParticles(fruit)
 	return true
 end
 
-local function getReasonSkipped(fruit)
-	if not selectedCrops[fruit.Name] then
-		return "❌ Crop not selected: " .. fruit.Name
+local function getReasonSkipped(fruit, cropName)
+		if not selectedCrops[cropName] then
+		return "❌ Crop not selected: " cropName
 	end
 	local variant = fruit:GetAttribute("Variant") or "Normal"
 	if not selectedVariants[variant] then
@@ -133,7 +133,7 @@ local function collectFruits()
 			local variant = fruit:GetAttribute("Variant") or "Normal"
 			local prompt = fruit:FindFirstChildWhichIsA("ProximityPrompt", true)
 
-			local reason = getReasonSkipped(fruit)
+			local reason = getReasonSkipped(fruit, crop.Name)
 			if reason then
 				print("⏭️ Skipped:", name, "-", reason)
 				skipped += 1
@@ -141,19 +141,20 @@ local function collectFruits()
 			end
 
 			if prompt then
-	local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-	if rootPart then
-		rootPart.CFrame = CFrame.new(prompt.Parent.Position + Vector3.new(0, 2, 0))
-		task.wait(0.15)
-	end
-	fireproximityprompt(prompt)
-	collected += 1
-	task.wait(0.1)
-else
-	print("❌ No ProximityPrompt for", name)
-	skipped += 1
-end
-
+				local rootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+				if rootPart then
+					local originalParent = prompt.Parent
+					prompt.Parent = rootPart -- temporarily attach to player to fake proximity
+					task.wait(0.15)
+					fireproximityprompt(prompt)
+					task.wait(0.05)
+					prompt.Parent = originalParent
+				end
+				collected += 1
+			else
+				print("❌ No ProximityPrompt for", name)
+				skipped += 1
+			end
 		end
 	end
 
