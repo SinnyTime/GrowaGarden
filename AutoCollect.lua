@@ -154,11 +154,11 @@ local function collectFruits()
 				prompt.Parent = rootPart
 				task.wait(0.25)
 
-				-- Simulate pressing "E"
-				UserInputService.InputBegan:Fire({
-					UserInputType = Enum.UserInputType.Keyboard,
-					KeyCode = Enum.KeyCode.E
-				}, false)
+				-- Fix key press simulation: Using the correct event handling
+				local inputObject = Instance.new("InputObject")
+				inputObject.UserInputType = Enum.UserInputType.Keyboard
+				inputObject.KeyCode = Enum.KeyCode.E
+				UserInputService.InputBegan:Fire(inputObject)
 
 				collected += 1
 				task.wait(0.25)
