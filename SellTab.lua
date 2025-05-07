@@ -111,7 +111,7 @@ local function isToolValid(tool)
 		end
 	else
 		-- Must match selected mutations *exactly*
-		if #mutations ~= table.getn(userSelected) then
+		if #mutations ~= #userSelected then
 			print("❌ Skipped: Mutation count mismatch.")
 			return false
 		end
