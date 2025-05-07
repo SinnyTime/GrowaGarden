@@ -54,7 +54,7 @@ local function parseToolName(toolName)
 	end
 	if not fruitNameFound then return nil, "Normal", {} end
 
-	local prefix = toolName:split(fruitNameFound)[1]
+	local prefix = toolName:sub(1, toolName:find(fruitNameFound) - 1)
 
 	local variant = "Normal"
 	if prefix:find("Gold") then
@@ -64,7 +64,7 @@ local function parseToolName(toolName)
 	end
 
 	for mutation in pairs(mutationMap) do
-		if prefix:find("%[" .. mutation .. "%]") then
+		if prefix:lower():find(mutation:lower()) then
 			table.insert(mutations, mutation)
 		end
 	end
