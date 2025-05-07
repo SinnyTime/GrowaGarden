@@ -2,8 +2,6 @@
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- RemoteEvents
@@ -23,65 +21,96 @@ local fruits = {
 	"Raspberry", "Cranberry", "Durian", "Eggplant", "Lotus"
 }
 
--- Mutation Mapping
+-- Variants
+local variants = { "Normal", "Gold", "Rainbow" }
+
+-- Mutations
 local mutationMap = {
-	FrozenParticle = "Frozen",
-	WetParticle = "Wet",
-	ChilledParticle = "Chilled",
-	ShockedParticle = "Shocked"
+	Frozen = "FrozenParticle",
+	Wet = "WetParticle",
+	Chilled = "ChilledParticle",
+	Shocked = "ShockedParticle"
 }
 
-local variantList = { "Normal", "Gold", "Rainbow" }
-
--- UI Elements
+-- UI Selections
 local selectedFruits = {}
-local selectedMutations = {}
 local selectedVariants = {}
+local selectedMutations = {}
 
--- Utility Functions
-local function hasBadMutations(item)
+-- Parse tool name
+local function parseToolName(toolName)
+	local mutations = {}
+	local name = toolName
+
 	for mutation in pairs(mutationMap) do
-		if item:FindFirstChild(mutation) and not selectedMutations[mutation] then
-			return true
+		if name:find("%[" .. mutation .. "%]") then
+			table.insert(mutations, mutation)
+			name = name:gsub("%[" .. mutation .. "%]%s*", "")
 		end
 	end
-	return false
-end
 
-local function matchesVariant(tool)
 	local variant = "Normal"
-	local variantObj = tool:FindFirstChild("Variant")
-	if variantObj and typeof(variantObj.Value) == "string" then
-		variant = variantObj.Value
+	if name:find("Gold") then
+		variant = "Gold"
+	elseif name:find("Rainbow") then
+		variant = "Rainbow"
 	end
-	return selectedVariants[variant] == true
+
+	for _, fruitName in ipairs(fruits) do
+		if name:find(fruitName) then
+			return fruitName, variant, mutations
+		end
+	end
+
+	return nil, variant, mutations
 end
 
+-- Check if tool should be sold
+local function isToolValid(tool)
+	local fruitName, variant, mutations = parseToolName(tool.Name)
+	if not fruitName then return false end
+	if not selectedFruits[fruitName] then return false end
+	if not selectedVariants[variant] then return false end
+
+	for _, mutation in ipairs(mutations) do
+		if not selectedMutations[mutation] then
+			return false
+		end
+	end
+
+	-- Check if unmutated tool is being rejected
+	if #mutations == 0 then
+		for m in pairs(selectedMutations) do
+			if selectedMutations[m] then
+				return false
+			end
+		end
+	end
+
+	return true
+end
+
+-- Teleport logic
 local function teleportTo(position)
-	local char = LocalPlayer.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		char:MoveTo(position)
-	end
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if root then root.CFrame = CFrame.new(position) end
 end
 
+-- Get valid inventory items
 local function getInventoryItems()
 	local backpack = LocalPlayer:WaitForChild("Backpack")
 	local items = {}
 
 	for _, tool in ipairs(backpack:GetChildren()) do
-		for _, fruitName in ipairs(fruits) do
-			if tool.Name:match(fruitName) and selectedFruits[fruitName] then
-				if not hasBadMutations(tool) and matchesVariant(tool) then
-					table.insert(items, tool)
-					break
-				end
-			end
+		if isToolValid(tool) then
+			table.insert(items, tool)
 		end
 	end
 
 	return items
 end
 
+-- Sell filtered tools
 local function sellItems(items)
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
@@ -91,14 +120,15 @@ local function sellItems(items)
 	task.wait(RETURN_DELAY)
 
 	for _, tool in ipairs(items) do
-		SellEvent:FireServer(tool.Name)
-		task.wait(0.1)
+		SellEvent:FireServer(tool)
+		task.wait(0.15)
 	end
 
 	task.wait(RETURN_DELAY)
 	teleportTo(originalPos)
 end
 
+-- Sell everything
 local function sellFullInventory()
 	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
@@ -113,7 +143,7 @@ local function sellFullInventory()
 	teleportTo(originalPos)
 end
 
--- UI Construction
+-- UI Setup
 return function(tab)
 	local scroll = Instance.new("ScrollingFrame")
 	scroll.Size = UDim2.new(1, 0, 1, -50)
@@ -186,7 +216,7 @@ return function(tab)
 
 	-- Variants
 	createHeader("🌈 Select Variants")
-	for _, variant in ipairs(variantList) do
+	for _, variant in ipairs(variants) do
 		selectedVariants[variant] = false
 		createCheckbox(variant, function(state)
 			selectedVariants[variant] = state
@@ -195,9 +225,9 @@ return function(tab)
 
 	-- Mutations
 	createHeader("🧬 Require Mutations")
-	for mutation, label in pairs(mutationMap) do
+	for mutation in pairs(mutationMap) do
 		selectedMutations[mutation] = false
-		createCheckbox(label, function(state)
+		createCheckbox(mutation, function(state)
 			selectedMutations[mutation] = state
 		end)
 	end
