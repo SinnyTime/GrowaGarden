@@ -8,7 +8,7 @@ module.Items = {
 		"Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper"
 	},
 	PremiumFruits = {
-		"Raspberry", "Cranberry", "Durian", "Eggplant", "Lotus"
+		"Raspberry", "Cranberry", "Durian", "Eggplant", "Lotus", "Peach", "Pineapple"
 	},
 	Gears = {
 		"Watering Can", "Trowel", "Basic Sprinkler", "Advanced Sprinkler",
