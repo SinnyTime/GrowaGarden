@@ -24,7 +24,7 @@ module.Prices = {
 	["Cactus"] = 15000, ["Dragon Fruit"] = 50000, ["Mango"] = 100000, ["Grape"] = 850000,
 	["Mushroom"] = 150000, ["Pepper"] = 1000000, ["Cacao"] = 25000000,
 	["Watering Can"] = 50000, ["Trowel"] = 100000,
-	["Recall Wrench"] = 150000
+	["Recall Wrench"] = 150000,
 	["Basic Sprinkler"] = 25000, ["Advanced Sprinkler"] = 50000,
 	["Godly Sprinkler"] = 120000, ["Lightning Rod"] = 1000000,
 	["Master Sprinkler"] = 10000000,
