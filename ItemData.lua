@@ -5,7 +5,7 @@ module.Items = {
 	Fruits = {
 		"Carrot", "Strawberry", "Blueberry", "Orange Tulip", "Tomato", "Corn",
 		"Daffodil", "Watermelon", "Pumpkin", "Apple", "Bamboo", "Coconut",
-		"Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper"
+		"Cactus", "Dragon Fruit", "Mango", "Grape", "Mushroom", "Pepper", "Cocao"
 	},
 	PremiumFruits = {
 		"Raspberry", "Cranberry", "Durian", "Eggplant", "Lotus", "Peach", "Pineapple"
@@ -22,7 +22,7 @@ module.Prices = {
 	["Tomato"] = 800, ["Corn"] = 1300, ["Daffodil"] = 1000, ["Watermelon"] = 2500,
 	["Pumpkin"] = 3000, ["Apple"] = 3250, ["Bamboo"] = 4000, ["Coconut"] = 6000,
 	["Cactus"] = 15000, ["Dragon Fruit"] = 50000, ["Mango"] = 100000, ["Grape"] = 850000,
-	["Mushroom"] = 150000, ["Pepper"] = 1000000,
+	["Mushroom"] = 150000, ["Pepper"] = 1000000, ["Cacao"] = 250000m
 	["Watering Can"] = 50000, ["Trowel"] = 100000,
 	["Basic Sprinkler"] = 25000, ["Advanced Sprinkler"] = 50000,
 	["Godly Sprinkler"] = 120000, ["Lightning Rod"] = 1000000,
