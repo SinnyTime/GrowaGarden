@@ -22,7 +22,7 @@ module.Prices = {
 	["Tomato"] = 800, ["Corn"] = 1300, ["Daffodil"] = 1000, ["Watermelon"] = 2500,
 	["Pumpkin"] = 3000, ["Apple"] = 3250, ["Bamboo"] = 4000, ["Coconut"] = 6000,
 	["Cactus"] = 15000, ["Dragon Fruit"] = 50000, ["Mango"] = 100000, ["Grape"] = 850000,
-	["Mushroom"] = 150000, ["Pepper"] = 1000000, ["Cacao"] = 250000m
+	["Mushroom"] = 150000, ["Pepper"] = 1000000, ["Cacao"] = 25000000,
 	["Watering Can"] = 50000, ["Trowel"] = 100000,
 	["Recall Wrench"] = 150000
 	["Basic Sprinkler"] = 25000, ["Advanced Sprinkler"] = 50000,
