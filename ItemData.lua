@@ -11,8 +11,8 @@ module.Items = {
 		"Raspberry", "Cranberry", "Durian", "Eggplant", "Lotus", "Peach", "Pineapple"
 	},
 	Gears = {
-		"Watering Can", "Trowel", "Basic Sprinkler", "Advanced Sprinkler",
-		"Godly Sprinkler", "Lightning Rod", "Master Sprinkler"
+		"Watering Can", "Trowel", "Recall Wrench", "Basic Sprinkler", "Advanced Sprinkler",
+		"Godly Sprinkler", "Lightning Rod", "Master Sprinkler", "Favorite Tool"
 	}
 }
 
@@ -24,9 +24,11 @@ module.Prices = {
 	["Cactus"] = 15000, ["Dragon Fruit"] = 50000, ["Mango"] = 100000, ["Grape"] = 850000,
 	["Mushroom"] = 150000, ["Pepper"] = 1000000, ["Cacao"] = 250000m
 	["Watering Can"] = 50000, ["Trowel"] = 100000,
+	["Recall Wrench"] = 150000
 	["Basic Sprinkler"] = 25000, ["Advanced Sprinkler"] = 50000,
 	["Godly Sprinkler"] = 120000, ["Lightning Rod"] = 1000000,
-	["Master Sprinkler"] = 10000000
+	["Master Sprinkler"] = 10000000,
+	["Favorite Tool"] = 20000000
 }
 
 -- Default toggle state settings
