@@ -31,7 +31,8 @@ local mutationMap = {
 	FrozenParticle = "Frozen",
 	WetParticle = "Wet",
 	ChilledParticle = "Chilled",
-	ShockedParticle = "Shocked"
+	ShockedParticle = "Shocked",
+	MoonlitParticle = "Moonlit"
 }
 
 local selectedCrops, selectedVariants, selectedMutations = {}, {}, {}
